@@ -112,5 +112,50 @@ class User {
 
         return false;
     }
+
+    /**
+     * Διαβάζει όλους τους χρήστες που έχουν status 'pending_approval'.
+     * @return PDOStatement Το αποτέλεσμα του query.
+     */
+    public function readPending() {
+        $query = "SELECT id, username, email, first_name, last_name, country, city, created_at
+                  FROM " . $this->table_name . "
+                  WHERE status = 'pending_approval'
+                  ORDER BY created_at DESC";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        
+        return $stmt;
+    }
+
+    /**
+     * Εγκρίνει έναν χρήστη, αλλάζοντας το status του σε 'active' και ορίζοντας τον ρόλο του.
+     * @return bool True αν η ενημέρωση ήταν επιτυχής, αλλιώς false.
+     */
+    public function approve() {
+        $query = "UPDATE " . $this->table_name . "
+                  SET status = 'active', role_id = :role_id
+                  WHERE id = :id AND status = 'pending_approval'";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Απολύμανση
+        $this->id = htmlspecialchars(strip_tags($this->id));
+        $this->role_id = htmlspecialchars(strip_tags($this->role_id));
+
+        // Σύνδεση παραμέτρων
+        $stmt->bindParam(':id', $this->id);
+        $stmt->bindParam(':role_id', $this->role_id);
+
+        if ($stmt->execute()) {
+            // Ελέγχουμε αν όντως έγινε η αλλαγή (αν υπήρχε χρήστης με αυτό το id και status)
+            if ($stmt->rowCount() > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
     
 }
