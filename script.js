@@ -230,5 +230,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+    // =================================================================
+    // 4. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΠΡΟΓΡΑΜΜΑΤΩΝ
+    // =================================================================
+    const programsContainer = document.getElementById('programs-container');
+
+    if (programsContainer) {
+        const messageArea = document.getElementById('message-area');
+
+        fetch(`${apiBaseUrl}/programs/read.php`)
+            .then(response => response.json())
+            .then(data => {
+                // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
+                if (data.message) {
+                    messageArea.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                    return;
+                }
+
+                // Αν έχουμε δεδομένα, καθαρίζουμε το container
+                programsContainer.innerHTML = '';
+                
+                data.forEach(program => {
+                    const card = `
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">${program.name}</h5>
+                                    <p class="card-text">${program.description}</p>
+                                    <p class="card-text"><small class="text-muted">Τύπος: ${program.type === 'group' ? 'Ομαδικό' : 'Ατομικό'}</small></p>
+                                    
+                                    <a href="booking.php?program_id=${program.id}" class="btn btn-primary mt-auto">Κάνε Κράτηση</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    programsContainer.innerHTML += card;
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching programs:', error);
+                messageArea.innerHTML = `<div class="alert alert-danger">Αδυναμία φόρτωσης των προγραμμάτων.</div>`;
+            });
+    }
+
+
+
 
 });
