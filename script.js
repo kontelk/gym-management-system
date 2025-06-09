@@ -593,4 +593,126 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+    // =================================================================
+    // 8. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΠΡΟΓΡΑΜΜΑΤΩΝ (ADMIN)
+    // =================================================================
+    if (document.getElementById('admin-programs-page-identifier')) {
+        const token = localStorage.getItem('jwt');
+        // Έλεγχος δικαιωμάτων πρόσβασης
+        if (!token || parseJwt(token).data.role_id !== 1) {
+            window.location.href = 'index.php';
+            return;
+        }
+
+        const programsTbody = document.getElementById('programs-tbody');
+        const messageArea = document.getElementById('message-area');
+        const programModal = new bootstrap.Modal(document.getElementById('program-modal'));
+        const programForm = document.getElementById('program-form');
+
+        // Φόρτωση των προγραμμάτων
+        function fetchAdminPrograms() {
+            fetch(`${apiBaseUrl}/programs/read_admin.php`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(res => res.json())
+                .then(data => {
+                    programsTbody.innerHTML = '';
+                    data.forEach(p => {
+                        const statusBadge = p.is_active ? '<span class="badge bg-success">Ενεργό</span>' : '<span class="badge bg-secondary">Ανενεργό</span>';
+                        const row = `<tr>
+                            <td>${p.id}</td>
+                            <td>${p.name}</td>
+                            <td>${p.type === 'group' ? 'Ομαδικό' : 'Ατομικό'}</td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm edit-btn" data-id="${p.id}">Επεξεργασία</button>
+                                ${p.is_active ? `<button class="btn btn-danger btn-sm delete-btn" data-id="${p.id}">Απενεργοποίηση</button>` : ''}
+                            </td>
+                        </tr>`;
+                        programsTbody.innerHTML += row;
+                    });
+                });
+        }
+        
+        // Άνοιγμα modal για νέο πρόγραμμα
+        document.getElementById('add-program-btn').addEventListener('click', () => {
+            programForm.reset();
+            document.getElementById('program-id').value = '';
+            document.getElementById('modal-title').textContent = 'Προσθήκη Νέου Προγράμματος';
+            document.getElementById('status-wrapper').style.display = 'none'; // Κρύβουμε το status για νέα
+            programModal.show();
+        });
+
+        // Event listener για επεξεργασία και διαγραφή
+        programsTbody.addEventListener('click', e => {
+            const target = e.target;
+            const id = target.getAttribute('data-id');
+
+            if (target.classList.contains('edit-btn')) {
+                // Φόρτωση δεδομένων για επεξεργασία
+                fetch(`${apiBaseUrl}/programs/read_one.php?id=${id}`)
+                    .then(res => res.json())
+                    .then(p => {
+                        document.getElementById('program-id').value = p.id;
+                        document.getElementById('program-name').value = p.name;
+                        document.getElementById('program-description').value = p.description;
+                        document.getElementById('program-type').value = p.type;
+                        document.getElementById('program-is-active').checked = p.is_active == 1; // == 1 για σωστή απόδοση του boolean
+                        document.getElementById('status-wrapper').style.display = 'block';
+                        document.getElementById('modal-title').textContent = 'Επεξεργασία Προγράμματος';
+                        programModal.show();
+                    });
+            } else if (target.classList.contains('delete-btn')) {
+                // Επιβεβαίωση διαγραφής
+                if (confirm('Είστε σίγουροι ότι θέλετε να απενεργοποιήσετε αυτό το πρόγραμμα;')) {
+                    fetch(`${apiBaseUrl}/programs/delete.php`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ id: id })
+                    })
+                    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+                    .then(({ status, body }) => {
+                         messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+                         fetchAdminPrograms(); // Ανανέωση της λίστας
+                         setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                    });
+                }
+            }
+        });
+
+        // Υποβολή φόρμας
+        programForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const id = document.getElementById('program-id').value;
+            const url = id ? `${apiBaseUrl}/programs/update.php` : `${apiBaseUrl}/programs/create.php`;
+            
+            const formData = {
+                id: id || undefined,
+                name: document.getElementById('program-name').value,
+                description: document.getElementById('program-description').value,
+                type: document.getElementById('program-type').value,
+                is_active: document.getElementById('program-is-active').checked
+            };
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(formData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                messageArea.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                programModal.hide();
+                fetchAdminPrograms();
+                setTimeout(() => messageArea.innerHTML = '', 4000);
+            });
+        });
+
+        // Αρχική φόρτωση
+        fetchAdminPrograms();
+    }
+
+
+
 });

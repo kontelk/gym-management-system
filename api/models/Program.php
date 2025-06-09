@@ -65,4 +65,79 @@ class Program {
     }
 
 
+    // ... (υπάρχουσες μέθοδοι readAllActive, readOne)
+
+    /**
+     * Δημιουργεί ένα νέο πρόγραμμα.
+     * @return bool True αν η δημιουργία ήταν επιτυχής, αλλιώς false.
+     */
+    public function create() {
+        $query = "INSERT INTO " . $this->table_name . " SET name=:name, description=:description, type=:type";
+        $stmt = $this->conn->prepare($query);
+
+        // Απολύμανση
+        $this->name = htmlspecialchars(strip_tags($this->name));
+        $this->description = htmlspecialchars(strip_tags($this->description));
+        $this->type = htmlspecialchars(strip_tags($this->type));
+
+        $stmt->bindParam(":name", $this->name);
+        $stmt->bindParam(":description", $this->description);
+        $stmt->bindParam(":type", $this->type);
+
+        return $stmt->execute();
+    }
+
+    /**
+     * Ενημερώνει ένα υπάρχον πρόγραμμα.
+     * @return bool True αν η ενημέρωση ήταν επιτυχής, αλλιώς false.
+     */
+    public function update() {
+        $query = "UPDATE " . $this->table_name . "
+                  SET name = :name, description = :description, type = :type, is_active = :is_active
+                  WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+
+        // Απολύμανση
+        $this->name = htmlspecialchars(strip_tags($this->name));
+        $this->description = htmlspecialchars(strip_tags($this->description));
+        $this->type = htmlspecialchars(strip_tags($this->type));
+        $this->is_active = htmlspecialchars(strip_tags($this->is_active));
+        $this->id = htmlspecialchars(strip_tags($this->id));
+
+        $stmt->bindParam(':name', $this->name);
+        $stmt->bindParam(':description', $this->description);
+        $stmt->bindParam(':type', $this->type);
+        $stmt->bindParam(':is_active', $this->is_active);
+        $stmt->bindParam(':id', $this->id);
+
+        return $stmt->execute();
+    }
+
+    /**
+     * Απενεργοποιεί ένα πρόγραμμα (soft delete).
+     * @return bool True αν η απενεργοποίηση ήταν επιτυχής, αλλιώς false.
+     */
+    public function delete() {
+        // Χρησιμοποιούμε soft delete για να μην χαθούν οι συνδέσεις με παλιές κρατήσεις.
+        // Απλά θέτουμε το is_active σε FALSE.
+        $query = "UPDATE " . $this->table_name . " SET is_active = FALSE WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $this->id=htmlspecialchars(strip_tags($this->id));
+        $stmt->bindParam(':id', $this->id);
+        
+        return $stmt->execute();
+    }
+
+    /**
+     * Διαβάζει όλα τα προγράμματα (ενεργά και ανενεργά) για τον διαχειριστή.
+     * @return PDOStatement
+     */
+    public function readAllForAdmin() {
+        $query = "SELECT id, name, description, type, is_active FROM " . $this->table_name . " ORDER BY name ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
+
 }
