@@ -158,4 +158,23 @@ class User {
         return false;
     }
     
+
+    /**
+     * Διαβάζει όλους τους χρήστες από τη βάση δεδομένων.
+     * @return PDOStatement Το αποτέλεσμα του query.
+     */
+    public function readAll() {
+        $query = "SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.status, r.role_name
+                  FROM " . $this->table_name . " u
+                  LEFT JOIN roles r ON u.role_id = r.id
+                  ORDER BY u.created_at DESC";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        
+        return $stmt;
+    }
+
+
+    
 }

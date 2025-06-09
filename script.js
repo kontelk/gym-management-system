@@ -485,4 +485,112 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+    // =================================================================
+    // 7. ΛΟΓΙΚΗ ΣΕΛΙΔΩΝ ΔΙΑΧΕΙΡΙΣΤΗ (ADMIN)
+    // =================================================================
+    if (document.getElementById('admin-users-page-identifier') || document.getElementById('admin-dashboard-page-identifier')) {
+        const token = localStorage.getItem('jwt');
+        const decodedToken = token ? parseJwt(token) : null;
+
+        // --- Προστασία Σελίδας Admin ---
+        if (!token || !decodedToken || decodedToken.data.role_id !== 1) {
+            // Αν δεν υπάρχει token ή ο ρόλος δεν είναι admin, ανακατεύθυνση
+            window.location.href = 'index.php'; 
+            return;
+        }
+
+        // Λογική μόνο για τη σελίδα διαχείρισης χρηστών
+        if (document.getElementById('admin-users-page-identifier')) {
+            const pendingUsersTbody = document.getElementById('pending-users-tbody');
+            const allUsersTbody = document.getElementById('all-users-tbody');
+            const pendingCountBadge = document.getElementById('pending-count');
+            const messageArea = document.getElementById('message-area');
+
+            // --- Φόρτωση χρηστών σε αναμονή ---
+            function fetchPendingUsers() {
+                fetch(`${apiBaseUrl}/users/read_pending.php`, { headers: { 'Authorization': `Bearer ${token}` } })
+                    .then(res => res.json())
+                    .then(data => {
+                        pendingUsersTbody.innerHTML = '';
+                        if (data.message) {
+                            pendingCountBadge.textContent = '0';
+                            pendingUsersTbody.innerHTML = `<tr><td colspan="5" class="text-center">${data.message}</td></tr>`;
+                        } else {
+                            pendingCountBadge.textContent = data.length;
+                            data.forEach(user => {
+                                const row = `<tr>
+                                    <td>${user.username}</td>
+                                    <td>${user.first_name} ${user.last_name}</td>
+                                    <td>${user.email}</td>
+                                    <td>${new Date(user.request_date).toLocaleDateString('el-GR')}</td>
+                                    <td><button class="btn btn-success btn-sm approve-btn" data-user-id="${user.id}">Έγκριση</button></td>
+                                </tr>`;
+                                pendingUsersTbody.innerHTML += row;
+                            });
+                        }
+                    });
+            }
+
+            // --- Φόρτωση όλων των χρηστών ---
+            function fetchAllUsers() {
+                 fetch(`${apiBaseUrl}/users/read.php`, { headers: { 'Authorization': `Bearer ${token}` } })
+                    .then(res => res.json())
+                    .then(data => {
+                        allUsersTbody.innerHTML = '';
+                        if (data.message) {
+                             allUsersTbody.innerHTML = `<tr><td colspan="5" class="text-center">${data.message}</td></tr>`;
+                        } else {
+                            data.forEach(user => {
+                                const roleBadge = user.role_name ? `<span class="badge bg-info">${user.role_name}</span>` : '';
+                                const row = `<tr>
+                                    <td>${user.id}</td>
+                                    <td>${user.username}</td>
+                                    <td>${user.email}</td>
+                                    <td>${roleBadge}</td>
+                                    <td>${user.status}</td>
+                                </tr>`;
+                                allUsersTbody.innerHTML += row;
+                            });
+                        }
+                    });
+            }
+
+            // --- Event Listener για έγκριση ---
+            pendingUsersTbody.addEventListener('click', function(e){
+                if(e.target && e.target.classList.contains('approve-btn')){
+                    const userId = e.target.getAttribute('data-user-id');
+                    if(confirm(`Είστε σίγουροι ότι θέλετε να εγκρίνετε τον χρήστη με ID: ${userId};`)){
+                        approveUser(userId);
+                    }
+                }
+            });
+
+            // --- Συνάρτηση για έγκριση χρήστη ---
+            function approveUser(userId) {
+                fetch(`${apiBaseUrl}/users/approve.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ user_id: userId, role_id: 2 }) // Εγκρίνουμε πάντα ως registered_user (ID=2)
+                })
+                .then(res => res.json().then(data => ({ status: res.status, body: data })))
+                .then(({ status, body }) => {
+                    messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+                    // Ανανέωση και των δύο λιστών
+                    fetchPendingUsers();
+                    fetchAllUsers();
+                    setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                });
+            }
+
+            // Αρχική φόρτωση όλων των δεδομένων
+            fetchPendingUsers();
+            fetchAllUsers();
+        }
+    }
+
+
+
 });
