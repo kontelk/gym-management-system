@@ -715,4 +715,165 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+    // =================================================================
+    // 9. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΠΡΟΓΡΑΜΜΑΤΟΣ (ADMIN SCHEDULE)
+    // =================================================================
+    if (document.getElementById('admin-schedule-page-identifier')) {
+        const token = localStorage.getItem('jwt');
+        if (!token || parseJwt(token).data.role_id !== 1) {
+            window.location.href = 'index.php';
+            return;
+        }
+        
+        const weekPicker = document.getElementById('week-picker');
+        const scheduleContainer = document.getElementById('schedule-container');
+        const eventModal = new bootstrap.Modal(document.getElementById('event-modal'));
+        const eventForm = document.getElementById('event-form');
+        
+        // --- Φόρτωση δεδομένων για τα dropdowns της φόρμας ---
+        function populateFormDropdowns() {
+            const programSelect = document.getElementById('event-program');
+            const trainerSelect = document.getElementById('event-trainer');
+            // Φόρτωση προγραμμάτων
+            fetch(`${apiBaseUrl}/programs/read_admin.php`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(res=>res.json()).then(data => {
+                    programSelect.innerHTML = '<option value="">Επιλέξτε...</option>';
+                    data.filter(p => p.is_active).forEach(p => programSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`);
+                });
+            // Φόρτωση γυμναστών
+            fetch(`${apiBaseUrl}/trainers/read.php`).then(res=>res.json()).then(data => {
+                trainerSelect.innerHTML = '<option value="">Κανένας</option>';
+                data.forEach(t => trainerSelect.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
+            });
+        }
+        
+        // --- Λογική του Week Picker ---
+        function getWeekDates(weekString) {
+            const year = parseInt(weekString.substring(0, 4));
+            const week = parseInt(weekString.substring(6));
+            const d = new Date(year, 0, 1 + (week - 1) * 7);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            const monday = new Date(d.setDate(diff));
+            const sunday = new Date(new Date(monday).setDate(monday.getDate() + 6));
+            return {
+                start: monday.toISOString().split('T')[0],
+                end: sunday.toISOString().split('T')[0]
+            };
+        }
+        
+        // --- Φόρτωση του προγράμματος της εβδομάδας ---
+        function fetchSchedule(start, end) {
+            scheduleContainer.innerHTML = `<p class="text-center">Φόρτωση προγράμματος...</p>`;
+            fetch(`${apiBaseUrl}/events/read_admin.php?start=${start}&end=${end}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(res => res.json())
+                .then(data => {
+                    renderSchedule(data);
+                });
+        }
+        
+        // --- Απόδοση του προγράμματος στο UI ---
+        function renderSchedule(events) {
+            scheduleContainer.innerHTML = '';
+            const days = ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο', 'Κυριακή'];
+            const eventsByDay = Array.from({ length: 7 }, () => []);
+            events.forEach(event => {
+                const dayIndex = (new Date(event.start_time).getDay() + 6) % 7; // Δευτέρα = 0
+                eventsByDay[dayIndex].push(event);
+            });
+
+            for (let i = 0; i < 7; i++) {
+                let dayHtml = `<div class="day-column mb-3"><h4>${days[i]}</h4>`;
+                if(eventsByDay[i].length === 0){
+                    dayHtml += `<p class="text-muted">Κανένα event.</p>`;
+                } else {
+                    eventsByDay[i].forEach(event => {
+                        dayHtml += `<div class="card mb-2">
+                            <div class="card-body">
+                                <h6 class="card-title">${event.program_name}</h6>
+                                <p class="card-text mb-1">
+                                    <small>${new Date(event.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(event.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                                </p>
+                                <p class="card-text mb-1"><small>Γυμναστής: ${event.trainer_name || 'N/A'}</small></p>
+                                <p class="card-text mb-2"><small>Κρατήσεις: ${event.current_bookings} / ${event.max_capacity}</small></p>
+                                <button class="btn btn-danger btn-sm delete-event-btn" data-id="${event.id}">Διαγραφή</button>
+                            </div>
+                        </div>`;
+                    });
+                }
+                dayHtml += '</div>';
+                scheduleContainer.innerHTML += dayHtml;
+            }
+        }
+        
+        // --- Event Listeners ---
+        document.getElementById('add-event-btn').addEventListener('click', () => {
+            eventForm.reset();
+            eventModal.show();
+        });
+        
+        weekPicker.addEventListener('change', () => {
+            const weekDates = getWeekDates(weekPicker.value);
+            fetchSchedule(weekDates.start, weekDates.end);
+        });
+
+        eventForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const formData = {
+                program_id: document.getElementById('event-program').value,
+                trainer_id: document.getElementById('event-trainer').value,
+                start_time: `${document.getElementById('event-date').value} ${document.getElementById('event-start-time').value}`,
+                end_time: `${document.getElementById('event-date').value} ${document.getElementById('event-end-time').value}`,
+                max_capacity: document.getElementById('event-capacity').value,
+            };
+            fetch(`${apiBaseUrl}/events/create.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(formData)
+            }).then(res => {
+                if (res.ok) {
+                    eventModal.hide();
+                    const weekDates = getWeekDates(weekPicker.value);
+                    fetchSchedule(weekDates.start, weekDates.end);
+                }
+            });
+        });
+        
+        scheduleContainer.addEventListener('click', e => {
+            if(e.target.classList.contains('delete-event-btn')) {
+                const eventId = e.target.getAttribute('data-id');
+                if(confirm('Είστε σίγουροι; Αυτή η ενέργεια θα διαγράψει και τις υπάρχουσες κρατήσεις για το event.')) {
+                    fetch(`${apiBaseUrl}/events/delete.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({id: eventId})
+                    }).then(res => {
+                        if (res.ok) {
+                           const weekDates = getWeekDates(weekPicker.value);
+                           fetchSchedule(weekDates.start, weekDates.end);
+                        }
+                    });
+                }
+            }
+        });
+
+        // --- Αρχική Φόρτωση ---
+        populateFormDropdowns();
+        // Ορίζουμε την τρέχουσα εβδομάδα ως προεπιλογή
+        const now = new Date();
+        const firstDay = new Date(now.setDate(now.getDate() - now.getDay() + 1));
+        const year = firstDay.getFullYear();
+        const week = Math.ceil((((firstDay - new Date(year, 0, 1)) / 86400000) + 1) / 7);
+        const currentWeekString = `${year}-W${String(week).padStart(2, '0')}`;
+        weekPicker.value = currentWeekString;
+        const weekDates = getWeekDates(weekPicker.value);
+        fetchSchedule(weekDates.start, weekDates.end);
+    }
+
+
+
+
+
+
+
 });

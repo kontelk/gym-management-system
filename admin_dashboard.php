@@ -27,6 +27,16 @@ include 'templates/header.php';
             </div>
         </div>
 
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Διαχείριση Χρονοπρογραμματισμού των Προγραμμάτων</h5>
+                    <p class="card-text">Προβολή των προγραμμάτων για την διαχείρισή του χρονοπρογραμματισμού τους.</p>
+                    <a href="admin_schedule.php" class="btn btn-primary">Μετάβαση</a>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
