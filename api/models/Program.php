@@ -46,4 +46,23 @@ class Program {
 
         return $stmt;
     }
+
+
+    /**
+     * Διαβάζει τις πληροφορίες ενός μόνο προγράμματος με βάση το ID.
+     */
+    public function readOne() {
+        $query = "SELECT id, name, description, type FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $this->id);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $this->name = $row['name'];
+            $this->description = $row['description'];
+            $this->type = $row['type'];
+        }
+    }
+
+
 }

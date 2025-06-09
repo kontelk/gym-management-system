@@ -274,6 +274,122 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+    // =================================================================
+    // 5. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΚΡΑΤΗΣΗΣ (BOOKING)
+    // =================================================================
+    if (document.getElementById('booking-page-identifier')) {
+        const token = localStorage.getItem('jwt');
+        const messageArea = document.getElementById('message-area');
+
+        // --- Προστασία Σελίδας ---
+        if (!token) {
+            window.location.href = 'login.php';
+            return; // Σταματάμε την εκτέλεση του υπόλοιπου κώδικα
+        }
+
+        // --- Αρχικοποίηση Σελίδας ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const programId = urlParams.get('program_id');
+        const programTitleEl = document.getElementById('program-title');
+        const datePicker = document.getElementById('date-picker');
+        const availabilityResults = document.getElementById('availability-results');
+        
+        // Ορισμός της ελάχιστης ημερομηνίας στο σήμερα
+        datePicker.min = new Date().toISOString().split("T")[0];
+
+        if (!programId) {
+            programTitleEl.textContent = 'Σφάλμα: Δεν επιλέχθηκε πρόγραμμα.';
+            datePicker.disabled = true;
+        } else {
+            // Φόρτωση του ονόματος του προγράμματος
+            fetch(`${apiBaseUrl}/programs/read_one.php?id=${programId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.name) {
+                        programTitleEl.textContent = `Κράτηση για: ${data.name}`;
+                    } else {
+                        programTitleEl.textContent = 'Το πρόγραμμα δεν βρέθηκε.';
+                    }
+                });
+        }
+        
+        // --- Event Listener για αλλαγή ημερομηνίας ---
+        datePicker.addEventListener('change', function() {
+            const selectedDate = this.value;
+            if (programId && selectedDate) {
+                fetchAvailability(programId, selectedDate);
+            }
+        });
+
+        // --- Συνάρτηση για φόρτωση διαθεσιμότητας ---
+        function fetchAvailability(pId, date) {
+            availabilityResults.innerHTML = `<p class="text-center">Αναζήτηση διαθεσιμότητας...</p>`;
+            fetch(`${apiBaseUrl}/events/search.php?program_id=${pId}&date=${date}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                availabilityResults.innerHTML = ''; // Καθαρισμός
+                if (data.message) {
+                    availabilityResults.innerHTML = `<p class="text-center text-warning">${data.message}</p>`;
+                } else {
+                    data.forEach(slot => {
+                        const startTime = new Date(slot.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        const item = `
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Ώρα:</strong> ${startTime} | 
+                                    <strong>Διαθέσιμες Θέσεις:</strong> ${slot.available_slots}
+                                </div>
+                                <button class="btn btn-success book-btn" data-event-id="${slot.event_id}">Κράτηση</button>
+                            </div>
+                        `;
+                        availabilityResults.innerHTML += item;
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                availabilityResults.innerHTML = `<p class="text-center text-danger">Σφάλμα φόρτωσης διαθεσιμότητας.</p>`;
+            });
+        }
+        
+        // --- Event Listener για κλικ στο κουμπί κράτησης (Event Delegation) ---
+        availabilityResults.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('book-btn')) {
+                const eventId = e.target.getAttribute('data-event-id');
+                if (confirm('Είστε σίγουροι ότι θέλετε να κάνετε κράτηση για αυτό το τμήμα;')) {
+                    createBooking(eventId);
+                }
+            }
+        });
+        
+        // --- Συνάρτηση για δημιουργία κράτησης ---
+        function createBooking(eId) {
+            fetch(`${apiBaseUrl}/bookings/create.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ event_id: eId })
+            })
+            .then(res => res.json().then(data => ({ status: res.status, body: data })))
+            .then(({ status, body }) => {
+                if (status === 201) {
+                    messageArea.innerHTML = `<div class="alert alert-success">${body.message}</div>`;
+                    // Ανανέωση της λίστας διαθεσιμότητας
+                    fetchAvailability(programId, datePicker.value);
+                } else {
+                    messageArea.innerHTML = `<div class="alert alert-danger">${body.message}</div>`;
+                }
+                // Σβήσιμο του μηνύματος μετά από 5 δευτερόλεπτα
+                setTimeout(() => { messageArea.innerHTML = ''; }, 5000);
+            })
+            .catch(err => console.error(err));
+        }
+    }
 
 
 });
