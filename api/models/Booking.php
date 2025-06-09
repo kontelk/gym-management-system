@@ -102,4 +102,79 @@ class Booking {
 
         return $cancellations >= 2;
     }
+
+
+    /**
+     * Διαβάζει όλες τις κρατήσεις για έναν συγκεκριμένο χρήστη.
+     * @return PDOStatement
+     */
+    public function readByUserId() {
+        $query = "SELECT
+                    b.id AS booking_id,
+                    p.name AS program_name,
+                    e.start_time,
+                    b.status
+                  FROM
+                    " . $this->table_name . " b
+                  JOIN
+                    events e ON b.event_id = e.id
+                  JOIN
+                    programs p ON e.program_id = p.id
+                  WHERE
+                    b.user_id = :user_id
+                  ORDER BY
+                    e.start_time DESC";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $this->user_id);
+        $stmt->execute();
+        
+        return $stmt;
+    }
+
+    /**
+     * Ακυρώνει μια κράτηση, αν πληρούνται οι προϋποθέσεις (π.χ. >2 ώρες πριν).
+     * @return array Ένα array με 'success' (true/false) και 'message'.
+     */
+    public function cancel() {
+        // Έλεγχος αν ο χρήστης μπορεί να ακυρώσει
+        $query = "SELECT e.start_time 
+                  FROM " . $this->table_name . " b
+                  JOIN events e ON b.event_id = e.id
+                  WHERE b.id = :booking_id AND b.user_id = :user_id AND b.status = 'confirmed'";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':booking_id', $this->id);
+        $stmt->bindParam(':user_id', $this->user_id);
+        $stmt->execute();
+        
+        $booking_to_cancel = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$booking_to_cancel) {
+            return ['success' => false, 'message' => 'Η κράτηση δεν βρέθηκε ή δεν μπορείτε να την ακυρώσετε.'];
+        }
+
+        // Έλεγχος του κανόνα των 2 ωρών
+        $event_time = new DateTime($booking_to_cancel['start_time']);
+        $now = new DateTime();
+        $interval = $now->diff($event_time);
+        $hours_diff = $interval->h + ($interval->days * 24);
+
+        if ($now > $event_time || $hours_diff < 2) {
+             return ['success' => false, 'message' => 'Η ακύρωση δεν επιτρέπεται λιγότερο από 2 ώρες πριν την έναρξη του ραντεβού.'];
+        }
+
+        // Αν όλα είναι ΟΚ, προχωράμε στην ακύρωση
+        $update_query = "UPDATE " . $this->table_name . " SET status = 'cancelled_by_user' WHERE id = :booking_id";
+        $stmt = $this->conn->prepare($update_query);
+        $stmt->bindParam(':booking_id', $this->id);
+
+        if ($stmt->execute()) {
+            return ['success' => true, 'message' => 'Η κράτηση ακυρώθηκε με επιτυχία.'];
+        }
+        
+        return ['success' => false, 'message' => 'Προέκυψε σφάλμα κατά την ακύρωση.'];
+    }
+
+
 }

@@ -392,4 +392,97 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+
+    // =================================================================
+    // 6. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ "ΟΙ ΚΡΑΤΗΣΕΙΣ ΜΟΥ"
+    // =================================================================
+    if (document.getElementById('my-bookings-page-identifier')) {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+            window.location.href = 'login.php';
+            return;
+        }
+
+        const bookingsContainer = document.getElementById('my-bookings-container');
+        const messageArea = document.getElementById('message-area');
+
+        function fetchMyBookings() {
+            bookingsContainer.innerHTML = '<tr><td colspan="4" class="text-center">Φόρτωση κρατήσεων...</td></tr>';
+
+            fetch(`${apiBaseUrl}/bookings/read_by_user.php`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                bookingsContainer.innerHTML = '';
+                if (data.message) {
+                    bookingsContainer.innerHTML = `<tr><td colspan="4" class="text-center">${data.message}</td></tr>`;
+                    return;
+                }
+                
+                const now = new Date();
+                
+                data.forEach(booking => {
+                    const eventDate = new Date(booking.start_time);
+                    const hoursDiff = (eventDate - now) / 1000 / 3600;
+
+                    let statusBadge = '';
+                    switch(booking.status) {
+                        case 'confirmed': statusBadge = '<span class="badge bg-success">Επιβεβαιωμένη</span>'; break;
+                        case 'cancelled_by_user': statusBadge = '<span class="badge bg-warning text-dark">Ακυρωμένη</span>'; break;
+                        default: statusBadge = `<span class="badge bg-secondary">${booking.status}</span>`;
+                    }
+
+                    // Το κουμπί ακύρωσης εμφανίζεται μόνο για μελλοντικές, επιβεβαιωμένες κρατήσεις > 2 ώρες πριν
+                    const cancelButton = (booking.status === 'confirmed' && hoursDiff > 2)
+                        ? `<button class="btn btn-danger btn-sm cancel-btn" data-booking-id="${booking.booking_id}">Ακύρωση</button>`
+                        : '';
+                    
+                    const row = `
+                        <tr>
+                            <td>${booking.program_name}</td>
+                            <td>${eventDate.toLocaleString('el-GR')}</td>
+                            <td>${statusBadge}</td>
+                            <td>${cancelButton}</td>
+                        </tr>
+                    `;
+                    bookingsContainer.innerHTML += row;
+                });
+            });
+        }
+        
+        // --- Event Listener για κλικ στην ακύρωση (Event Delegation) ---
+        bookingsContainer.addEventListener('click', function(e){
+            if(e.target && e.target.classList.contains('cancel-btn')){
+                const bookingId = e.target.getAttribute('data-booking-id');
+                if(confirm('Είστε σίγουροι ότι θέλετε να ακυρώσετε αυτή την κράτηση;')){
+                    cancelBooking(bookingId);
+                }
+            }
+        });
+
+        // --- Συνάρτηση για ακύρωση κράτησης ---
+        function cancelBooking(bookingId) {
+            fetch(`${apiBaseUrl}/bookings/cancel.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ booking_id: bookingId })
+            })
+            .then(res => res.json().then(data => ({ status: res.status, body: data })))
+            .then(({ status, body }) => {
+                messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+                fetchMyBookings(); // Ανανέωση της λίστας
+                setTimeout(() => { messageArea.innerHTML = ''; }, 5000);
+            });
+        }
+
+        // Αρχική φόρτωση των δεδομένων
+        fetchMyBookings();
+    }
+
+
+
 });
