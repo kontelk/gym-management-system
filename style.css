@@ -1,0 +1,8 @@
+/* Custom CSS styles will go here */
+body {
+    background-color: #f8f9fa;
+}
+
+main {
+    min-height: 80vh; /* Εξασφαλίζει ότι το footer μένει κάτω σε σελίδες με λίγο περιεχόμενο */
+}
