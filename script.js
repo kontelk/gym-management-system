@@ -876,4 +876,169 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
+    // =================================================================
+    // 10. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΑΝΑΚΟΙΝΩΣΕΩΝ (ADMIN)
+    // =================================================================
+    if (document.getElementById('admin-announcements-page-identifier')) {
+        const token = localStorage.getItem('jwt');
+        if (!token || parseJwt(token).data.role_id !== 1) {
+            window.location.href = 'index.php';
+            return;
+        }
+
+        const announcementsTbody = document.getElementById('announcements-tbody');
+        const messageArea = document.getElementById('message-area');
+        const announcementModal = new bootstrap.Modal(document.getElementById('announcement-modal'));
+        const announcementForm = document.getElementById('announcement-form');
+
+        function fetchAnnouncements() {
+            // Το endpoint /read.php είναι δημόσιο, αλλά εδώ το καλούμε για να πάρουμε τη λίστα για διαχείριση.
+            fetch(`${apiBaseUrl}/announcements/read.php`, { headers: { 'Authorization': `Bearer ${token}` }})
+                .then(res => res.json())
+                .then(data => {
+                    announcementsTbody.innerHTML = '';
+                    if (data.message) {
+                        announcementsTbody.innerHTML = `<tr><td colspan="4" class="text-center">${data.message}</td></tr>`;
+                    } else {
+                        data.forEach(a => {
+                            const row = `<tr>
+                                <td>${a.title}</td>
+                                <td>${a.author}</td>
+                                <td>${new Date(a.created_at).toLocaleDateString('el-GR')}</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm edit-btn" data-id="${a.id}">Επεξεργασία</button>
+                                    <button class="btn btn-danger btn-sm delete-btn" data-id="${a.id}">Διαγραφή</button>
+                                </td>
+                            </tr>`;
+                            announcementsTbody.innerHTML += row;
+                        });
+                    }
+                });
+        }
+        
+        document.getElementById('add-announcement-btn').addEventListener('click', () => {
+            announcementForm.reset();
+            document.getElementById('announcement-id').value = '';
+            document.getElementById('modal-title').textContent = 'Προσθήκη Νέας Ανακοίνωσης';
+            announcementModal.show();
+        });
+
+        announcementsTbody.addEventListener('click', e => {
+            const target = e.target;
+            const id = target.getAttribute('data-id');
+
+            if (target.classList.contains('edit-btn')) {
+                // Φόρτωση δεδομένων για επεξεργασία
+                fetch(`${apiBaseUrl}/announcements/read_one.php?id=${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.id) {
+                        document.getElementById('announcement-id').value = data.id;
+                        document.getElementById('announcement-title').value = data.title;
+                        document.getElementById('announcement-content').value = data.content;
+                        document.getElementById('modal-title').textContent = 'Επεξεργασία Ανακοίνωσης';
+                        announcementModal.show();
+                    }
+                });
+            } else if (target.classList.contains('delete-btn')) {
+                if(confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε οριστικά αυτή την ανακοίνωση;')){
+                    fetch(`${apiBaseUrl}/announcements/delete.php`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ id: id })
+                    })
+                    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+                    .then(({ status, body }) => {
+                        messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+                        fetchAnnouncements(); // Ανανέωση της λίστας
+                        setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                    });
+                }
+            }
+        });
+
+        announcementForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const id = document.getElementById('announcement-id').value;
+            const url = id ? `${apiBaseUrl}/announcements/update.php` : `${apiBaseUrl}/announcements/create.php`;
+            
+            const formData = {
+                id: id || undefined,
+                title: document.getElementById('announcement-title').value,
+                content: document.getElementById('announcement-content').value
+            };
+            
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(formData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                messageArea.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                announcementModal.hide();
+                fetchAnnouncements();
+                setTimeout(() => messageArea.innerHTML = '', 4000);
+            });
+        });
+        
+        fetchAnnouncements();
+    }
+
+
+
+
+
+    // =================================================================
+    // 11. ΛΟΓΙΚΗ ΦΟΡΤΩΣΗΣ ΑΝΑΚΟΙΝΩΣΕΩΝ ΣΤΗΝ ΑΡΧΙΚΗ ΣΕΛΙΔΑ
+    // =================================================================
+    const announcementsContainer = document.getElementById('announcements-container');
+
+    // Εκτέλεση μόνο αν βρισκόμαστε στην αρχική σελίδα (όπου υπάρχει το container)
+    if (announcementsContainer) {
+        announcementsContainer.innerHTML = '<p class="text-center">Φόρτωση ανακοινώσεων...</p>';
+
+        fetch(`${apiBaseUrl}/announcements/read.php`)
+            .then(response => response.json())
+            .then(data => {
+                announcementsContainer.innerHTML = ''; // Καθαρισμός του container
+                
+                // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
+                if (data.message) {
+                    announcementsContainer.innerHTML = `<div class="list-group-item">${data.message}</div>`;
+                    return;
+                }
+
+                data.forEach(announcement => {
+                    const item = `
+                        <div class="list-group-item list-group-item-action flex-column align-items-start mb-2">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">${announcement.title}</h5>
+                                <small>${new Date(announcement.created_at).toLocaleDateString('el-GR')}</small>
+                            </div>
+                            <p class="mb-1">${announcement.content}</p>
+                            <small>Από: ${announcement.author}</small>
+                        </div>
+                    `;
+                    announcementsContainer.innerHTML += item;
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching announcements:', error);
+                announcementsContainer.innerHTML = '<div class="alert alert-danger">Αδυναμία φόρτωσης των ανακοινώσεων.</div>';
+            });
+    }
+
+
+
+
+
+
+
 });

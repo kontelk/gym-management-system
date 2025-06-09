@@ -30,9 +30,19 @@ include 'templates/header.php';
         <div class="col-md-4 mb-3">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Διαχείριση Χρονοπρογραμματισμού των Προγραμμάτων</h5>
+                    <h5 class="card-title">Χρονοπρογραμματισμός των Προγραμμάτων</h5>
                     <p class="card-text">Προβολή των προγραμμάτων για την διαχείρισή του χρονοπρογραμματισμού τους.</p>
                     <a href="admin_schedule.php" class="btn btn-primary">Μετάβαση</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Διαχείριση Ανακοινώσεων</h5>
+                    <p class="card-text">Δημιουργία, επεξεργασία και διαγραφή νέων και προσφορών για τους χρήστες.</p>
+                    <a href="admin_announcements.php" class="btn btn-primary">Μετάβαση</a>
                 </div>
             </div>
         </div>
