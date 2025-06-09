@@ -54,10 +54,10 @@ INSERT INTO `programs` (`id`, `name`, `description`, `type`, `is_active`) VALUES
 -- Το hash έχει δημιουργηθεί με BCRYPT.
 -- -----------------------------------------------------------------
 INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `first_name`, `last_name`, `country`, `city`, `address`, `role_id`, `status`) VALUES
-(1, 'admin', 'admin@gym.com', '$2y$10$iRnA4Ie.VbEaLp/w2y.O.eMAaL1aGeG8f2TPd2z21WlbaSjYdJ1C6', 'Γιώργος', 'Παπαδάκης', 'Greece', 'Athens', 'Λεωφ. Αλεξάνδρας 10', 1, 'active'),
-(2, 'giorgos_p', 'g.pappas@email.com', '$2y$10$iRnA4Ie.VbEaLp/w2y.O.eMAaL1aGeG8f2TPd2z21WlbaSjYdJ1C6', 'Γιώργος', 'Παππάς', 'Greece', 'Athens', 'Πατησίων 50', 2, 'active'),
-(3, 'maria_k', 'm.karagianni@email.com', '$2y$10$iRnA4Ie.VbEaLp/w2y.O.eMAaL1aGeG8f2TPd2z21WlbaSjYdJ1C6', 'Μαρία', 'Καραγιάννη', 'Greece', 'Thessaloniki', 'Εγνατίας 22', 2, 'active'),
-(4, 'pending_user', 'pending@email.com', '$2y$10$iRnA4Ie.VbEaLp/w2y.O.eMAaL1aGeG8f2TPd2z21WlbaSjYdJ1C6', 'Άννα', 'Ιωάννου', 'Greece', 'Patra', 'Κορίνθου 15', NULL, 'pending_approval');
+(1, 'admin', 'admin@gym.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Γιώργος', 'Παπαδάκης', 'Greece', 'Athens', 'Λεωφ. Αλεξάνδρας 10', 1, 'active'),
+(2, 'giorgos_p', 'g.pappas@email.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Γιώργος', 'Παππάς', 'Greece', 'Athens', 'Πατησίων 50', 2, 'active'),
+(3, 'maria_k', 'm.karagianni@email.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Μαρία', 'Καραγιάννη', 'Greece', 'Thessaloniki', 'Εγνατίας 22', 2, 'active'),
+(4, 'pending_user', 'pending@email.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Άννα', 'Ιωάννου', 'Greece', 'Patra', 'Κορίνθου 15', NULL, 'pending_approval');
 
 
 -- -----------------------------------------------------------------
