@@ -55,9 +55,9 @@ INSERT INTO `programs` (`id`, `name`, `description`, `type`, `is_active`) VALUES
 -- -----------------------------------------------------------------
 INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `first_name`, `last_name`, `country`, `city`, `address`, `role_id`, `status`) VALUES
 (1, 'admin', 'admin@gym.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Γιώργος', 'Παπαδάκης', 'Greece', 'Athens', 'Λεωφ. Αλεξάνδρας 10', 1, 'active'),
-(2, 'giorgos_p', 'g.pappas@email.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Γιώργος', 'Παππάς', 'Greece', 'Athens', 'Πατησίων 50', 2, 'active'),
-(3, 'maria_k', 'm.karagianni@email.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Μαρία', 'Καραγιάννη', 'Greece', 'Thessaloniki', 'Εγνατίας 22', 2, 'active'),
-(4, 'pending_user', 'pending@email.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Άννα', 'Ιωάννου', 'Greece', 'Patra', 'Κορίνθου 15', NULL, 'pending_approval');
+(2, 'g.pappas', 'g.pappas@email.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Γιώργος', 'Παππάς', 'Greece', 'Athens', 'Πατησίων 50', 2, 'active'),
+(3, 'm.karagianni', 'm.karagianni@email.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Μαρία', 'Καραγιάννη', 'Greece', 'Thessaloniki', 'Εγνατίας 22', 2, 'active'),
+(4, 'a.ioannou', 'a.ioannou@email.com', '$2y$10$ECfSiaTxccwznQI8aDpWMuh8uezc4XFpRzOL6IkB0EB5ZBHPvhozK', 'Άννα', 'Ιωάννου', 'Greece', 'Patra', 'Κορίνθου 15', NULL, 'pending_approval');
 
 
 -- -----------------------------------------------------------------
@@ -67,22 +67,22 @@ INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `first_name`, `
 -- Ομαδικά Events
 INSERT INTO `events` (`program_id`, `trainer_id`, `start_time`, `end_time`, `max_capacity`) VALUES
 -- Pilates με την Ελένη την επόμενη Δευτέρα και Τετάρτη
-(1, 1, '2025-06-09 18:00:00', '2025-06-09 19:00:00', 15),
-(1, 1, '2025-06-11 18:00:00', '2025-06-11 19:00:00', 15),
+(1, 1, '2025-07-09 18:00:00', '2025-07-09 19:00:00', 15),
+(1, 1, '2025-07-11 18:00:00', '2025-07-11 19:00:00', 15),
 -- Crossfit με τον Κώστα την επόμενη Τρίτη και Πέμπτη
-(2, 2, '2025-06-10 20:00:00', '2025-06-10 21:00:00', 10),
-(2, 2, '2025-06-12 20:00:00', '2025-06-12 21:00:00', 10);
+(2, 2, '2025-07-10 20:00:00', '2025-07-10 21:00:00', 10),
+(2, 2, '2025-07-12 20:00:00', '2025-07-12 21:00:00', 10);
 
--- Ατομικά Events (slots για την πισίνα την επόμενη Δευτέρα)
+-- Ατομικά Events (slots για την πισίνα)
 INSERT INTO `events` (`program_id`, `trainer_id`, `start_time`, `end_time`, `max_capacity`) VALUES
-(4, NULL, '2025-06-09 09:00:00', '2025-06-09 10:00:00', 1),
-(4, NULL, '2025-06-09 10:00:00', '2025-06-09 11:00:00', 1),
-(4, NULL, '2025-06-09 11:00:00', '2025-06-09 12:00:00', 1);
+(4, NULL, '2025-07-09 09:00:00', '2025-07-09 10:00:00', 1),
+(4, NULL, '2025-07-09 10:00:00', '2025-07-09 11:00:00', 1),
+(4, NULL, '2025-07-09 11:00:00', '2025-07-09 12:00:00', 1);
 
--- Ατομικά Events (slots για την αίθουσα με βάρη την επόμενη Δευτέρα)
+-- Ατομικά Events (slots για την αίθουσα με βάρη)
 INSERT INTO `events` (`program_id`, `trainer_id`, `start_time`, `end_time`, `max_capacity`) VALUES
-(3, NULL, '2025-06-09 17:00:00', '2025-06-09 18:00:00', 1),
-(3, NULL, '2025-06-09 18:00:00', '2025-06-09 19:00:00', 1);
+(3, NULL, '2025-07-09 17:00:00', '2025-07-09 18:00:00', 1),
+(3, NULL, '2025-07-09 18:00:00', '2025-07-09 19:00:00', 1);
 
 -- -----------------------------------------------------------------
 -- Εισαγωγή Κρατήσεων (Bookings)
@@ -101,4 +101,4 @@ INSERT INTO `bookings` (`user_id`, `event_id`, `status`) VALUES
 -- -----------------------------------------------------------------
 INSERT INTO `announcements` (`title`, `content`, `user_id`) VALUES
 ('Καλοκαιρινή Προσφορά!', 'Επωφεληθείτε από την καλοκαιρινή μας προσφορά με 20% έκπτωση σε όλες τις τρίμηνες συνδρομές. Η προσφορά ισχύει μέχρι 31/07.', 1),
-('Αλλαγή στο πρόγραμμα Yoga', 'Το μάθημα της Yoga της Παρασκευής θα γίνεται στις 19:00 αντί για τις 20:00 για τον μήνα Ιούνιο.', 1);
+('Αλλαγή στο πρόγραμμα Yoga', 'Το μάθημα της Yoga της Παρασκευής θα γίνεται στις 19:00 αντί για τις 20:00 για τον μήνα Ιούλιο.', 1);

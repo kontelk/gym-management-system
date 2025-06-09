@@ -47,12 +47,12 @@ SELECT * FROM programs;
 -- -- Προβολή λίστας όλων των γυμναστών.
 SELECT * FROM trainers;
 
--- -- Προβολή του προγράμματος (events) για μια συγκεκριμένη ημέρα (π.χ. την επόμενη Δευτέρα).
+-- -- Προβολή του προγράμματος (events) για μια συγκεκριμένη ημέρα.
 SELECT e.id, p.name AS program_name, CONCAT(t.first_name, ' ', t.last_name) AS trainer_name, e.start_time, e.max_capacity
 FROM events e
 JOIN programs p ON e.program_id = p.id
 LEFT JOIN trainers t ON e.trainer_id = t.id
-WHERE DATE(e.start_time) = '2025-06-09'
+WHERE DATE(e.start_time) = '2025-07-09'
 ORDER BY e.start_time;
 
 
@@ -95,7 +95,7 @@ SELECT
 FROM events e
 JOIN programs p ON e.program_id = p.id
 LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
-WHERE p.name = 'Pilates' AND DATE(e.start_time) = '2025-06-09'
+WHERE p.name = 'Pilates' AND DATE(e.start_time) = '2025-07-09'
 GROUP BY e.id
 HAVING available_slots > 0;
 
@@ -127,8 +127,8 @@ FROM bookings b
 JOIN events e on b.event_id = e.id
 WHERE b.user_id = 2
   AND b.status = 'cancelled_by_user'
-  AND YEAR(e.start_time) = YEAR('2025-06-09')
-  AND WEEK(e.start_time, 1) = WEEK('2025-06-09', 1);
+  AND YEAR(e.start_time) = YEAR('2025-07-09')
+  AND WEEK(e.start_time, 1) = WEEK('2025-07-09', 1);
 
 
 -- -----------------------------------------------------------------
