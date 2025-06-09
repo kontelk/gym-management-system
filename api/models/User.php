@@ -5,6 +5,7 @@ class User {
 
     public $id;
     public $username;
+    public $password;
     public $password_hash;
     public $role_id;
     public $status;
@@ -65,6 +66,51 @@ class User {
             $this->city = $row['city'];
             $this->address = $row['address'];
         }
+    }    
+
+    /**
+     * Δημιουργεί μια νέα εγγραφή χρήστη με status 'pending_approval'.
+     * @return bool True αν η εγγραφή ήταν επιτυχής, αλλιώς false.
+     */
+    public function register() {
+        // Query για την εισαγωγή νέου χρήστη.
+        // Ο ρόλος είναι NULL και το status είναι 'pending_approval' εξ ορισμού.
+        $query = "INSERT INTO " . $this->table_name . "
+                  SET
+                    username=:username, email=:email, password_hash=:password_hash,
+                    first_name=:first_name, last_name=:last_name, country=:country,
+                    city=:city, address=:address";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Απολύμανση (Sanitize) των δεδομένων
+        $this->username = htmlspecialchars(strip_tags($this->username));
+        $this->email = htmlspecialchars(strip_tags($this->email));
+        $this->first_name = htmlspecialchars(strip_tags($this->first_name));
+        $this->last_name = htmlspecialchars(strip_tags($this->last_name));
+        $this->country = htmlspecialchars(strip_tags($this->country));
+        $this->city = htmlspecialchars(strip_tags($this->city));
+        $this->address = htmlspecialchars(strip_tags($this->address));
+        
+        // Hashing του κωδικού πριν την αποθήκευση
+        $this->password_hash = password_hash($this->password, PASSWORD_BCRYPT);
+
+        // Σύνδεση των παραμέτρων
+        $stmt->bindParam(":username", $this->username);
+        $stmt->bindParam(":email", $this->email);
+        $stmt->bindParam(":password_hash", $this->password_hash);
+        $stmt->bindParam(":first_name", $this->first_name);
+        $stmt->bindParam(":last_name", $this->last_name);
+        $stmt->bindParam(":country", $this->country);
+        $stmt->bindParam(":city", $this->city);
+        $stmt->bindParam(":address", $this->address);
+
+        // Εκτέλεση του query
+        if ($stmt->execute()) {
+            return true;
+        }
+
+        return false;
     }
     
 }

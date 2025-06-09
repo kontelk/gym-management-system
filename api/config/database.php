@@ -24,7 +24,7 @@ define('DB_PORT', '3306');
 
 // --- Ρυθμίσεις για το JSON Web Token (JWT) ---
 
-// Ένα μυστικό κλειδί για την υπογραφή του token.
+// Μυστικό κλειδί για την υπογραφή του token (64+ characters with uppercase, lowercase, numbers, and symbols)
 define('JWT_SECRET_KEY', 's83fJkL!29dm^PoaUq4vXw7ZbN9qMeRcT1yHG5vLa6BdXn@z0WcE#rYpLtMvN3xQ');
 
 // Ο εκδότης του token.
