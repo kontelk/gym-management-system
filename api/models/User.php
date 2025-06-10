@@ -9,6 +9,12 @@ class User {
     public $password_hash;
     public $role_id;
     public $status;
+    public $email;
+    public $first_name;
+    public $last_name;
+    public $country;
+    public $city;
+    public $address;
     
     public function __construct($db) {
         $this->conn = $db;
