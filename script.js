@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const apiBaseUrl = '/api/endpoints'; // Βασικό URL του API μας
 
+    
+    
     // =================================================================
     // 1. ΛΟΓΙΚΗ ΠΛΟΗΓΗΣΗΣ ΚΑΙ ΚΑΤΑΣΤΑΣΗΣ ΧΡΗΣΤΗ
     // =================================================================
@@ -62,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Κλήση της updateNavbar() σε κάθε φόρτωση σελίδας
     updateNavbar();
+
 
 
     // =================================================================
@@ -136,6 +139,38 @@ document.addEventListener('DOMContentLoaded', function() {
         const citySelect = document.getElementById('city-select');
         const messageArea = document.getElementById('message-area');
 
+        // --- Συνάρτηση για τον έλεγχο εγκυρότητας της φόρμας ---
+        function validateRegisterForm() {
+            let isValid = true;
+            const inputs = registerForm.querySelectorAll('input[required], select[required]');
+
+            inputs.forEach(input => {
+                // Αρχικά, καθαρίζουμε τυχόν προηγούμενα σφάλματα
+                input.classList.remove('is-invalid');
+                input.classList.remove('is-valid');
+
+                let condition = false;
+                // Έλεγχος ανάλογα με τον τύπο του input
+                if (input.type === 'email') {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    condition = !emailRegex.test(input.value.trim());
+                } else if (input.minLength > 0) {
+                    condition = input.value.trim().length < input.minLength;
+                } else {
+                    condition = input.value.trim() === '';
+                }
+
+                if (condition) {
+                    isValid = false;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.add('is-valid');
+                }
+            });
+            
+            return isValid;
+        }
+
         // --- Φόρτωση Χωρών από εξωτερικό API ---
         fetch('https://countriesnow.space/api/v0.1/countries/positions')
             .then(response => response.json())
@@ -190,6 +225,16 @@ document.addEventListener('DOMContentLoaded', function() {
         registerForm.addEventListener('submit', function(e) {
             e.preventDefault(); // Αποτροπή της default συμπεριφοράς
 
+            // Πρώτα εκτελούμε το validation
+            if (!validateRegisterForm()) {
+                // Αν δεν είναι έγκυρη, εμφανίζουμε ένα γενικό μήνυμα και σταματάμε
+                messageArea.innerHTML = `<div class="alert alert-warning">Παρακαλώ διορθώστε τα σφάλματα στη φόρμα.</div>`;
+                return;
+            }
+
+            // Αν η φόρμα είναι έγκυρη, καθαρίζουμε το μήνυμα και συνεχίζουμε
+            messageArea.innerHTML = '';
+
             // Συλλογή δεδομένων από τη φόρμα
             const registerData = {
                 first_name: document.getElementById('first_name').value,
@@ -208,16 +253,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(registerData)
             })
-            .then(response => {
-                // Η απάντηση από το API περιέχει το τελικό μήνυμα
-                return response.json().then(data => ({ status: response.status, body: data }));
-            })
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
             .then(({ status, body }) => {
-                if (status === 201) { // 201 Created
+                // Πρώτα, καθαρίζουμε όλα τα προηγούμενα σφάλματα
+                registerForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                
+                if (status === 201) { // Επιτυχία
                     messageArea.innerHTML = `<div class="alert alert-success">${body.message}</div>`;
-                    registerForm.reset(); // Καθαρισμός της φόρμας
+                    registerForm.reset();
+                    registerForm.querySelectorAll('.is-valid').forEach(el => el.classList.remove('is-valid'));
                     citySelect.disabled = true;
-                } else {
+                } else if (status === 422) { // Σφάλματα Validation από τον Server
+                    messageArea.innerHTML = `<div class="alert alert-danger">${body.message}</div>`;
+                    // Εμφάνιση συγκεκριμένων σφαλμάτων κάτω από κάθε πεδίο
+                    for (const field in body.errors) {
+                        const input = document.getElementById(field);
+                        if (input) {
+                            input.classList.add('is-invalid');
+                            // Βρίσκουμε το div για το feedback που είναι "αδερφός" του input
+                            const feedbackDiv = input.nextElementSibling;
+                            if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                                feedbackDiv.textContent = body.errors[field];
+                            }
+                        }
+                    }
+                } else { // Άλλα σφάλματα
                     messageArea.innerHTML = `<div class="alert alert-danger">${body.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
                 }
             })
@@ -225,6 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
                 messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα επικοινωνίας με τον server.</div>`;
             });
+
         });
     }
 
@@ -272,6 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 messageArea.innerHTML = `<div class="alert alert-danger">Αδυναμία φόρτωσης των προγραμμάτων.</div>`;
             });
     }
+
 
 
     // =================================================================
@@ -790,59 +852,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Καλουμε τη render για να τα εμφανίσει
                     renderSchedule();
                 });
-        }
-        
-        // function renderSchedule() {
-        //     scheduleContainer.innerHTML = '';
-            
-        //     const showIndividual = toggleSwitch.checked;
-            
-        //     const eventsToRender = currentScheduleData.filter(event => {
-        //         if (showIndividual) return true; // Εμφάνισε τα πάντα
-        //         return event.program_type === 'group'; // Εμφάνισε μόνο τα ομαδικά
-        //     });
-            
-        //     if (eventsToRender.length === 0) {
-        //          scheduleContainer.innerHTML = `<p class="text-center text-muted">Δεν υπάρχουν events για εμφάνιση με τα τρέχοντα φίλτρα.</p>`;
-        //          return;
-        //     }
-
-        //     const days = ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο', 'Κυριακή'];
-        //     const eventsByDay = Array.from({ length: 7 }, () => []);
-            
-        //     eventsToRender.forEach(event => {
-        //         const dayIndex = (new Date(event.start_time).getDay() + 6) % 7;
-        //         eventsByDay[dayIndex].push(event);
-        //     });
-
-        //     for (let i = 0; i < 7; i++) {
-        //         let dayHtml = `<div class="day-column mb-3"><h4>${days[i]}</h4>`;
-        //         if(eventsByDay[i].length === 0){
-        //             dayHtml += `<p class="text-muted small">Κανένα event.</p>`;
-        //         } else {
-        //             eventsByDay[i].sort((a,b) => new Date(a.start_time) - new Date(b.start_time)); // Ταξινόμηση ανά ώρα
-        //             eventsByDay[i].forEach(event => {
-        //                 const programTypeDisplay = event.program_type === 'group' ? 'Ομαδικό' : 'Ατομικό';
-        //                 const title = `${event.program_name} (${programTypeDisplay})`;
-        //                 const capacityText = event.max_capacity === null ? 'Απεριόριστες' : event.max_capacity;
-        //                 const cardColorClass = event.program_type === 'group' ? 'bg-danger-subtle' : 'bg-success-subtle';
-                        
-        //                 dayHtml += `<div class="card mb-2 ${cardColorClass}">
-        //                                 <div class="card-body">
-        //                                     <h6 class="card-title">${title}</h6>
-        //                                     <p class="card-text mb-1"><small>${new Date(event.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(event.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small></p>
-        //                                     <p class="card-text mb-1"><small>Γυμναστής: ${event.trainer_name || 'N/A'}</small></p>
-        //                                     <p class="card-text mb-2"><small>Κρατήσεις: ${event.current_bookings} / ${capacityText}</small></p>
-        //                                     <button class="btn btn-danger btn-sm delete-event-btn" data-id="${event.id}">Διαγραφή</button>
-        //                                 </div>
-        //                             </div>`;
-        //             });
-        //         }
-        //         dayHtml += '</div>';
-        //         scheduleContainer.innerHTML += dayHtml;
-        //     }
-        // }
-        
+        }        
 
         // --- Απόδοση του προγράμματος στο UI (ΕΝΗΜΕΡΩΜΕΝΗ ΜΕ ΛΙΣΤΑ ΣΥΜΜΕΤΕΧΟΝΤΩΝ) ---
         function renderSchedule() {
@@ -994,8 +1004,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const weekDates = getWeekDates(weekPicker.value);
         fetchSchedule(weekDates.start, weekDates.end);
     }
-
-
 
 
 

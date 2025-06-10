@@ -75,12 +75,35 @@ class User {
     }    
 
     /**
-     * Δημιουργεί μια νέα εγγραφή χρήστη με status 'pending_approval'.
-     * @return bool True αν η εγγραφή ήταν επιτυχής, αλλιώς false.
+     * Ελέγχει και δημιουργεί μια νέα εγγραφή χρήστη.
+     * @return bool|array True σε επιτυχία, ή ένα array με τα σφάλματα validation.
      */
     public function register() {
-        // Query για την εισαγωγή νέου χρήστη.
-        // Ο ρόλος είναι NULL και το status είναι 'pending_approval' εξ ορισμού.
+        $errors = [];
+
+        // --- Έλεγχοι Εγκυρότητας ---
+        if (strlen(trim($this->username)) < 5) {
+            $errors['username'] = 'Το όνομα χρήστη πρέπει να έχει τουλάχιστον 5 χαρακτήρες.';
+        }
+        if ($this->isUsernameTaken()) {
+            $errors['username'] = 'Αυτό το όνομα χρήστη χρησιμοποιείται ήδη.';
+        }
+        if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Η διεύθυνση email δεν είναι έγκυρη.';
+        }
+        if ($this->isEmailTaken()) {
+            $errors['email'] = 'Αυτή η διεύθυνση email χρησιμοποιείται ήδη.';
+        }
+        if (strlen($this->password) < 8) {
+            $errors['password'] = 'Ο κωδικός πρόσβασης πρέπει να έχει τουλάχιστον 8 χαρακτήρες.';
+        }
+
+        // Αν υπάρχουν σφάλματα, τα επιστρέφουμε και σταματάμε
+        if (!empty($errors)) {
+            return $errors;
+        }
+
+        // Αν δεν υπάρχουν σφάλματα, συνεχίζουμε με την εισαγωγή στη βάση
         $query = "INSERT INTO " . $this->table_name . "
                   SET
                     username=:username, email=:email, password_hash=:password_hash,
@@ -116,7 +139,31 @@ class User {
             return true;
         }
 
-        return false;
+        return ['database' => 'Προέκυψε ένα σφάλμα κατά την εγγραφή στη βάση δεδομένων.'];
+    }
+
+    /**
+     * Ελέγχει αν ένα username υπάρχει ήδη.
+     * @return bool
+     */
+    private function isUsernameTaken() {
+        $query = "SELECT id FROM " . $this->table_name . " WHERE username = :username LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':username', $this->username);
+        $stmt->execute();
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Ελέγχει αν ένα email υπάρχει ήδη.
+     * @return bool
+     */
+    private function isEmailTaken() {
+        $query = "SELECT id FROM " . $this->table_name . " WHERE email = :email LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':email', $this->email);
+        $stmt->execute();
+        return $stmt->rowCount() > 0;
     }
 
     /**

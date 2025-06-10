@@ -44,18 +44,43 @@ if (
     $user->city = $data->city;
     $user->address = $data->address ?? ''; // Το address είναι προαιρετικό
 
+    
+
     // Προσπάθεια δημιουργίας του χρήστη
-    if ($user->register()) {
-        // 201 Created: Ο πόρος δημιουργήθηκε επιτυχώς
+    $result = $user->register();
+    
+    if ($result === true) {
+        // Επιτυχία
         http_response_code(201);
-        echo json_encode(array("message" => "Το αίτημα εγγραφής υποβλήθηκε με επιτυχία. Αναμένεται έγκριση από τον διαχειριστή."));
+        echo json_encode(["message" => "Το αίτημα εγγραφής υποβλήθηκε με επιτυχία. Αναμένεται έγκριση από τον διαχειριστή."]);
+    } else if (is_array($result)) {
+        // Βρέθηκαν σφάλματα validation
+        // 422 Unprocessable Entity: Η σύνταξη του request ήταν σωστή, αλλά δεν μπόρεσε να επεξεργαστεί λόγω σημασιολογικών σφαλμάτων.
+        http_response_code(422);
+        echo json_encode([
+            "message" => "Η εγγραφή απέτυχε λόγω σφαλμάτων επικύρωσης.",
+            "errors" => $result
+        ]);
     } else {
-        // 503 Service Unavailable: Το αίτημα δεν μπόρεσε να ολοκληρωθεί (π.χ. το username/email υπάρχει ήδη)
+        // Άλλο σφάλμα (π.χ. βάσης)
         http_response_code(503);
-        echo json_encode(array("message" => "Αδυναμία δημιουργίας χρήστη. Το όνομα χρήστη ή το email ενδέχεται να χρησιμοποιούνται ήδη."));
+        echo json_encode(["message" => "Αδυναμία δημιουργίας χρήστη."]);
     }
-} else {
-    // 400 Bad Request: Δεν δόθηκαν όλα τα απαραίτητα δεδομένα
-    http_response_code(400);
-    echo json_encode(array("message" => "Αδυναμία δημιουργίας χρήστη. Τα δεδομένα είναι ελλιπή."));
+
 }
+
+//     // Προσπάθεια δημιουργίας του χρήστη
+//     if ($user->register()) {
+//         // 201 Created: Ο πόρος δημιουργήθηκε επιτυχώς
+//         http_response_code(201);
+//         echo json_encode(array("message" => "Το αίτημα εγγραφής υποβλήθηκε με επιτυχία. Αναμένεται έγκριση από τον διαχειριστή."));
+//     } else {
+//         // 503 Service Unavailable: Το αίτημα δεν μπόρεσε να ολοκληρωθεί (π.χ. το username/email υπάρχει ήδη)
+//         http_response_code(503);
+//         echo json_encode(array("message" => "Αδυναμία δημιουργίας χρήστη. Το όνομα χρήστη ή το email ενδέχεται να χρησιμοποιούνται ήδη."));
+//     }
+// } else {
+//     // 400 Bad Request: Δεν δόθηκαν όλα τα απαραίτητα δεδομένα
+//     http_response_code(400);
+//     echo json_encode(array("message" => "Αδυναμία δημιουργίας χρήστη. Τα δεδομένα είναι ελλιπή."));
+// }
