@@ -112,17 +112,36 @@ class Event {
         //           WHERE DATE(e.start_time) BETWEEN :start_date AND :end_date
         //           GROUP BY e.id
         //           ORDER BY e.start_time ASC";
+        // $query = "SELECT
+        //             e.id, p.name AS program_name, p.type AS program_type, 
+        //             CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
+        //             e.start_time, e.end_time, e.max_capacity, COUNT(b.id) AS current_bookings
+        //           FROM " . $this->table_name . " e
+        //           JOIN programs p ON e.program_id = p.id
+        //           LEFT JOIN trainers t ON e.trainer_id = t.id
+        //           LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
+        //           WHERE DATE(e.start_time) BETWEEN :start_date AND :end_date
+        //           GROUP BY e.id
+        //           ORDER BY e.start_time ASC";
         $query = "SELECT
-                    e.id, p.name AS program_name, p.type AS program_type, 
-                    CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
+                    e.id, p.name AS program_name, p.type AS program_type, CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
                     e.start_time, e.end_time, e.max_capacity, COUNT(b.id) AS current_bookings
-                  FROM " . $this->table_name . " e
-                  JOIN programs p ON e.program_id = p.id
-                  LEFT JOIN trainers t ON e.trainer_id = t.id
-                  LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
-                  WHERE DATE(e.start_time) BETWEEN :start_date AND :end_date
-                  GROUP BY e.id
-                  ORDER BY e.start_time ASC";
+                  FROM
+                    " . $this->table_name . " e
+                  JOIN
+                    programs p ON e.program_id = p.id
+                  LEFT JOIN
+                    trainers t ON e.trainer_id = t.id
+                  LEFT JOIN
+                    bookings b ON e.id = b.event_id AND b.status = 'confirmed'
+                  WHERE
+                    DATE(e.start_time) BETWEEN :start_date AND :end_date
+                  GROUP BY
+                    e.id
+                  HAVING
+                    (p.type = 'group') OR (COUNT(b.id) > 0)
+                  ORDER BY
+                    e.start_time ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':start_date', $start_date);
         $stmt->bindParam(':end_date', $end_date);

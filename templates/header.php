@@ -22,8 +22,8 @@
         <li class="nav-item"><a class="nav-link" href="index.php">Αρχική</a></li>
         <li class="nav-item"><a class="nav-link" href="programs.php">Προγράμματα</a></li>
         
-        <li class="nav-item user-link d-none"><a class="nav-link" href="booking.php">Νέα Κράτηση</a></li>
-        <li class="nav-item user-link d-none"><a class="nav-link" href="my_bookings.php">Οι Κρατήσεις μου</a></li>
+        <!-- <li class="nav-item user-link d-none"><a class="nav-link" href="booking.php">Νέα Κράτηση</a></li> -->
+        <li class="nav-item user-link d-none"><a class="nav-link" href="my_bookings.php">Κρατήσεις</a></li>
         
         <li class="nav-item admin-link d-none"><a class="nav-link" href="admin_dashboard.php">Admin Dashboard</a></li>
         

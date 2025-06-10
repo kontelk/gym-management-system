@@ -128,7 +128,7 @@ class Booking {
                   WHERE
                     b.user_id = :user_id
                   ORDER BY
-                    e.start_time DESC";
+                    e.start_time ASC";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':user_id', $this->user_id);

@@ -90,7 +90,7 @@ CREATE TABLE `events` (
   `trainer_id` INT NULL,
   `start_time` DATETIME NOT NULL,
   `end_time` DATETIME NOT NULL,
-  `max_capacity` INT UNSIGNED NOT NULL,
+  `max_capacity` INT UNSIGNED NULL,
   PRIMARY KEY (`id`),
   KEY `fk_events_program_id` (`program_id`),
   KEY `fk_events_trainer_id` (`trainer_id`),
