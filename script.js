@@ -254,10 +254,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     const card = `
                         <div class="col-md-6 col-lg-4 mb-4">
                             <div class="card h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title">${program.name}</h5>
+                                <div class="card-body d-flex flex-column ${program.type === 'group' ? 'bg-danger-subtle' : 'bg-success-subtle'}">
+                                    <h5 class="card-title"><em>${program.name}</em></h5>
                                     <p class="card-text">${program.description}</p>
-                                    <p class="card-text"><small class="text-muted">Τύπος: ${program.type === 'group' ? 'Ομαδικό' : 'Ατομικό'}</small></p>
+                                    <p class="card-text"><small class="text-muted">Τύπος: <strong>${program.type === 'group' ? 'Ομαδικό' : 'Ατομικό'}</strong></small></p>
                                     
                                     <a href="booking.php?program_id=${program.id}" class="btn btn-primary mt-auto">Κάνε Κράτηση</a>
                                 </div>
@@ -716,7 +716,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // =================================================================
-    // 9. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΠΡΟΓΡΑΜΜΑΤΟΣ (ADMIN SCHEDULE) - ΠΛΗΡΗΣ ΚΩΔΙΚΑΣ
+    // 9. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΧΡΟΝΟΠΡΟΓΡΑΜΜΑΤΙΣΜΟΥ (ADMIN)
     // =================================================================
     if (document.getElementById('admin-schedule-page-identifier')) {
         const token = localStorage.getItem('jwt');
@@ -792,14 +792,67 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         }
         
+        // function renderSchedule() {
+        //     scheduleContainer.innerHTML = '';
+            
+        //     const showIndividual = toggleSwitch.checked;
+            
+        //     const eventsToRender = currentScheduleData.filter(event => {
+        //         if (showIndividual) return true; // Εμφάνισε τα πάντα
+        //         return event.program_type === 'group'; // Εμφάνισε μόνο τα ομαδικά
+        //     });
+            
+        //     if (eventsToRender.length === 0) {
+        //          scheduleContainer.innerHTML = `<p class="text-center text-muted">Δεν υπάρχουν events για εμφάνιση με τα τρέχοντα φίλτρα.</p>`;
+        //          return;
+        //     }
+
+        //     const days = ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο', 'Κυριακή'];
+        //     const eventsByDay = Array.from({ length: 7 }, () => []);
+            
+        //     eventsToRender.forEach(event => {
+        //         const dayIndex = (new Date(event.start_time).getDay() + 6) % 7;
+        //         eventsByDay[dayIndex].push(event);
+        //     });
+
+        //     for (let i = 0; i < 7; i++) {
+        //         let dayHtml = `<div class="day-column mb-3"><h4>${days[i]}</h4>`;
+        //         if(eventsByDay[i].length === 0){
+        //             dayHtml += `<p class="text-muted small">Κανένα event.</p>`;
+        //         } else {
+        //             eventsByDay[i].sort((a,b) => new Date(a.start_time) - new Date(b.start_time)); // Ταξινόμηση ανά ώρα
+        //             eventsByDay[i].forEach(event => {
+        //                 const programTypeDisplay = event.program_type === 'group' ? 'Ομαδικό' : 'Ατομικό';
+        //                 const title = `${event.program_name} (${programTypeDisplay})`;
+        //                 const capacityText = event.max_capacity === null ? 'Απεριόριστες' : event.max_capacity;
+        //                 const cardColorClass = event.program_type === 'group' ? 'bg-danger-subtle' : 'bg-success-subtle';
+                        
+        //                 dayHtml += `<div class="card mb-2 ${cardColorClass}">
+        //                                 <div class="card-body">
+        //                                     <h6 class="card-title">${title}</h6>
+        //                                     <p class="card-text mb-1"><small>${new Date(event.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(event.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small></p>
+        //                                     <p class="card-text mb-1"><small>Γυμναστής: ${event.trainer_name || 'N/A'}</small></p>
+        //                                     <p class="card-text mb-2"><small>Κρατήσεις: ${event.current_bookings} / ${capacityText}</small></p>
+        //                                     <button class="btn btn-danger btn-sm delete-event-btn" data-id="${event.id}">Διαγραφή</button>
+        //                                 </div>
+        //                             </div>`;
+        //             });
+        //         }
+        //         dayHtml += '</div>';
+        //         scheduleContainer.innerHTML += dayHtml;
+        //     }
+        // }
+        
+
+        // --- Απόδοση του προγράμματος στο UI (ΕΝΗΜΕΡΩΜΕΝΗ ΜΕ ΛΙΣΤΑ ΣΥΜΜΕΤΕΧΟΝΤΩΝ) ---
         function renderSchedule() {
             scheduleContainer.innerHTML = '';
             
             const showIndividual = toggleSwitch.checked;
             
             const eventsToRender = currentScheduleData.filter(event => {
-                if (showIndividual) return true; // Εμφάνισε τα πάντα
-                return event.program_type === 'group'; // Εμφάνισε μόνο τα ομαδικά
+                if (showIndividual) return true;
+                return event.program_type === 'group';
             });
             
             if (eventsToRender.length === 0) {
@@ -820,20 +873,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(eventsByDay[i].length === 0){
                     dayHtml += `<p class="text-muted small">Κανένα event.</p>`;
                 } else {
-                    eventsByDay[i].sort((a,b) => new Date(a.start_time) - new Date(b.start_time)); // Ταξινόμηση ανά ώρα
+                    eventsByDay[i].sort((a,b) => new Date(a.start_time) - new Date(b.start_time));
                     eventsByDay[i].forEach(event => {
                         const programTypeDisplay = event.program_type === 'group' ? 'Ομαδικό' : 'Ατομικό';
                         const title = `${event.program_name} (${programTypeDisplay})`;
                         const capacityText = event.max_capacity === null ? 'Απεριόριστες' : event.max_capacity;
                         const cardColorClass = event.program_type === 'group' ? 'bg-danger-subtle' : 'bg-success-subtle';
                         
+                        // **ΝΕΑ ΛΟΓΙΚΗ: Δημιουργία λίστας συμμετεχόντων**
+                        let participantsHtml = '<h6 class="fs-6">Συμμετέχοντες:</h6>';
+                        if (event.bookings && event.bookings.length > 0) {
+                            participantsHtml += '<ul class="list-group mb-0 small">';
+                            event.bookings.forEach(booking => {
+                                participantsHtml += `<li>${booking.first_name} ${booking.last_name}</li>`;
+                            });
+                            participantsHtml += '</ul>';
+                        } else {
+                            participantsHtml += '<p class="small text-muted mb-0">Καμία κράτηση.</p>';
+                        }
+
                         dayHtml += `<div class="card mb-2 ${cardColorClass}">
                                         <div class="card-body">
-                                            <h6 class="card-title">${title}</h6>
-                                            <p class="card-text mb-1"><small>${new Date(event.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(event.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small></p>
-                                            <p class="card-text mb-1"><small>Γυμναστής: ${event.trainer_name || 'N/A'}</small></p>
-                                            <p class="card-text mb-2"><small>Κρατήσεις: ${event.current_bookings} / ${capacityText}</small></p>
-                                            <button class="btn btn-danger btn-sm delete-event-btn" data-id="${event.id}">Διαγραφή</button>
+                                            <div class="row">
+                                                <div class="col-7">
+                                                    <h6 class="card-title"><em>${title}</em></h6>
+                                                    <p class="card-text mb-1"><small>${new Date(event.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(event.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small></p>
+                                                    <p class="card-text mb-1"><small>Γυμναστής: ${event.trainer_name || 'N/A'}</small></p>
+                                                    <p class="card-text mb-2"><small>Κρατήσεις: ${event.current_bookings} / ${capacityText}</small></p>
+                                                    <button class="btn btn-danger btn-sm delete-event-btn" data-id="${event.id}">Διαγραφή</button>
+                                                </div>
+                                                <div class="col-5 border-start">
+                                                    ${participantsHtml}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>`;
                     });
@@ -842,7 +914,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 scheduleContainer.innerHTML += dayHtml;
             }
         }
-        
+
+
         // --- Event Listeners ---
         
         document.getElementById('add-event-btn').addEventListener('click', () => {
@@ -1066,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const item = `
                         <div class="list-group-item list-group-item-action flex-column align-items-start mb-2 bg-warning-subtle">
                             <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">${announcement.title}</h5>
+                                <h5 class="mb-1"><em>${announcement.title}</em></h5>
                                 <small>${new Date(announcement.created_at).toLocaleDateString('el-GR')}</small>
                             </div>
                             <p class="mb-1">${announcement.content}</p>

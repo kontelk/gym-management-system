@@ -20,10 +20,6 @@ if (!$start_date || !$end_date) {
 $database = Database::getInstance();
 $db = $database->getConnection();
 $event = new Event($db);
-$stmt = $event->readByDateRange($start_date, $end_date);
-$events_arr = [];
-while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    array_push($events_arr, $row);
-}
+$events_arr = $event->readByDateRange($start_date, $end_date);
 http_response_code(200);
 echo json_encode($events_arr, JSON_UNESCAPED_UNICODE);

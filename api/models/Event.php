@@ -95,59 +95,132 @@ class Event {
         return $stmt->execute();
     }
 
+    // /**
+    //  * Διαβάζει όλα τα events για μια συγκεκριμένη χρονική περίοδο (π.χ. εβδομάδα).
+    //  * @param string $start_date
+    //  * @param string $end_date
+    //  * @return PDOStatement
+    //  */
+    // public function readByDateRange($start_date, $end_date) {
+    //     // $query = "SELECT
+    //     //             e.id, p.name AS program_name, CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
+    //     //             e.start_time, e.end_time, e.max_capacity, COUNT(b.id) AS current_bookings
+    //     //           FROM " . $this->table_name . " e
+    //     //           JOIN programs p ON e.program_id = p.id
+    //     //           LEFT JOIN trainers t ON e.trainer_id = t.id
+    //     //           LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
+    //     //           WHERE DATE(e.start_time) BETWEEN :start_date AND :end_date
+    //     //           GROUP BY e.id
+    //     //           ORDER BY e.start_time ASC";
+    //     // $query = "SELECT
+    //     //             e.id, p.name AS program_name, p.type AS program_type, 
+    //     //             CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
+    //     //             e.start_time, e.end_time, e.max_capacity, COUNT(b.id) AS current_bookings
+    //     //           FROM " . $this->table_name . " e
+    //     //           JOIN programs p ON e.program_id = p.id
+    //     //           LEFT JOIN trainers t ON e.trainer_id = t.id
+    //     //           LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
+    //     //           WHERE DATE(e.start_time) BETWEEN :start_date AND :end_date
+    //     //           GROUP BY e.id
+    //     //           ORDER BY e.start_time ASC";
+    //     $query = "SELECT
+    //                 e.id, p.name AS program_name, p.type AS program_type, CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
+    //                 e.start_time, e.end_time, e.max_capacity, COUNT(b.id) AS current_bookings
+    //               FROM
+    //                 " . $this->table_name . " e
+    //               JOIN
+    //                 programs p ON e.program_id = p.id
+    //               LEFT JOIN
+    //                 trainers t ON e.trainer_id = t.id
+    //               LEFT JOIN
+    //                 bookings b ON e.id = b.event_id AND b.status = 'confirmed'
+    //               WHERE
+    //                 DATE(e.start_time) BETWEEN :start_date AND :end_date
+    //               GROUP BY
+    //                 e.id
+    //               HAVING
+    //                 (p.type = 'group') OR (COUNT(b.id) > 0)
+    //               ORDER BY
+    //                 e.start_time ASC";
+    //     $stmt = $this->conn->prepare($query);
+    //     $stmt->bindParam(':start_date', $start_date);
+    //     $stmt->bindParam(':end_date', $end_date);
+    //     $stmt->execute();
+    //     return $stmt;
+    // }
+
+
+
+
     /**
-     * Διαβάζει όλα τα events για μια συγκεκριμένη χρονική περίοδο (π.χ. εβδομάδα).
+     * Διαβάζει όλα τα events για μια συγκεκριμένη χρονική περίοδο,
+     * συμπεριλαμβάνοντας και τη λίστα των χρηστών που έχουν κάνει κράτηση.
      * @param string $start_date
      * @param string $end_date
-     * @return PDOStatement
+     * @return array
      */
     public function readByDateRange($start_date, $end_date) {
-        // $query = "SELECT
-        //             e.id, p.name AS program_name, CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
-        //             e.start_time, e.end_time, e.max_capacity, COUNT(b.id) AS current_bookings
-        //           FROM " . $this->table_name . " e
-        //           JOIN programs p ON e.program_id = p.id
-        //           LEFT JOIN trainers t ON e.trainer_id = t.id
-        //           LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
-        //           WHERE DATE(e.start_time) BETWEEN :start_date AND :end_date
-        //           GROUP BY e.id
-        //           ORDER BY e.start_time ASC";
-        // $query = "SELECT
-        //             e.id, p.name AS program_name, p.type AS program_type, 
-        //             CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
-        //             e.start_time, e.end_time, e.max_capacity, COUNT(b.id) AS current_bookings
-        //           FROM " . $this->table_name . " e
-        //           JOIN programs p ON e.program_id = p.id
-        //           LEFT JOIN trainers t ON e.trainer_id = t.id
-        //           LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
-        //           WHERE DATE(e.start_time) BETWEEN :start_date AND :end_date
-        //           GROUP BY e.id
-        //           ORDER BY e.start_time ASC";
+        // Βήμα 1: Παίρνουμε όλα τα events της περιόδου
         $query = "SELECT
                     e.id, p.name AS program_name, p.type AS program_type, CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
-                    e.start_time, e.end_time, e.max_capacity, COUNT(b.id) AS current_bookings
-                  FROM
-                    " . $this->table_name . " e
-                  JOIN
-                    programs p ON e.program_id = p.id
-                  LEFT JOIN
-                    trainers t ON e.trainer_id = t.id
-                  LEFT JOIN
-                    bookings b ON e.id = b.event_id AND b.status = 'confirmed'
-                  WHERE
-                    DATE(e.start_time) BETWEEN :start_date AND :end_date
-                  GROUP BY
-                    e.id
-                  HAVING
-                    (p.type = 'group') OR (COUNT(b.id) > 0)
-                  ORDER BY
-                    e.start_time ASC";
+                    e.start_time, e.end_time, e.max_capacity
+                  FROM " . $this->table_name . " e
+                  JOIN programs p ON e.program_id = p.id
+                  LEFT JOIN trainers t ON e.trainer_id = t.id
+                  WHERE DATE(e.start_time) BETWEEN :start_date AND :end_date
+                  ORDER BY e.start_time ASC";
+        
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':start_date', $start_date);
         $stmt->bindParam(':end_date', $end_date);
         $stmt->execute();
-        return $stmt;
+        
+        $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (count($events) === 0) {
+            return [];
+        }
+
+        // Βήμα 2: Παίρνουμε τα IDs όλων των events που βρήκαμε
+        $event_ids = array_column($events, 'id');
+        $placeholders = implode(',', array_fill(0, count($event_ids), '?'));
+
+        // Βήμα 3: Παίρνουμε όλες τις κρατήσεις για αυτά τα events με μία κλήση στη βάση
+        $booking_query = "SELECT
+                            b.event_id, u.first_name, u.last_name
+                          FROM bookings b
+                          JOIN users u ON b.user_id = u.id
+                          WHERE b.event_id IN (" . $placeholders . ") AND b.status = 'confirmed'";
+                          
+        $stmt_bookings = $this->conn->prepare($booking_query);
+        $stmt_bookings->execute($event_ids);
+        
+        $bookings = $stmt_bookings->fetchAll(PDO::FETCH_ASSOC);
+
+        // Βήμα 4: Ομαδοποιούμε τις κρατήσεις ανά event_id για εύκολη πρόσβαση
+        $bookings_by_event = [];
+        foreach ($bookings as $booking) {
+            $bookings_by_event[$booking['event_id']][] = $booking;
+        }
+
+        // Βήμα 5: Ενσωματώνουμε τις κρατήσεις και το πλήθος τους σε κάθε event
+        foreach ($events as &$event) { // Ο τελεστής & επιτρέπει την τροποποίηση του πίνακα "in-place"
+            $event_bookings = $bookings_by_event[$event['id']] ?? [];
+            $event['bookings'] = $event_bookings;
+            $event['current_bookings'] = count($event_bookings);
+        }
+
+        // Βήμα 6 (Τελικό Φιλτράρισμα): Εφαρμόζουμε τον κανόνα που θέσαμε προηγουμένως
+        $filtered_events = array_filter($events, function($event) {
+            return ($event['program_type'] === 'group' || $event['current_bookings'] > 0);
+        });
+
+        // Επιστρέφουμε τα φιλτραρισμένα events
+        return array_values($filtered_events); // array_values για να μην έχουμε "κενά" στα keys
     }
+
+
+
 
     /**
      * Διαγράφει ένα event.
