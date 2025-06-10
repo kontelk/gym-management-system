@@ -229,5 +229,128 @@ class User {
     }
 
 
+
+    // ... (υπάρχουσες μέθοδοι)
+
+    /**
+     * Ενημερώνει τα στοιχεία ενός χρήστη.
+     * @return bool|array True σε επιτυχία, ή array με σφάλματα validation.
+     */
+    public function update() {
+        // Validation (παρόμοιο με του register
+        // $errors = [];
+        // 
+        // --- Έλεγχοι Εγκυρότητας ---
+        // if (strlen(trim($this->username)) < 5) {
+        //     $errors['username'] = 'Το όνομα χρήστη πρέπει να έχει τουλάχιστον 5 χαρακτήρες.';
+        // }
+        // if ($this->isUsernameTaken()) {
+        //     $errors['username'] = 'Αυτό το όνομα χρήστη χρησιμοποιείται ήδη.';
+        // }
+        // if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+        //     $errors['email'] = 'Η διεύθυνση email δεν είναι έγκυρη.';
+        // }
+        // if ($this->isEmailTaken()) {
+        //     $errors['email'] = 'Αυτή η διεύθυνση email χρησιμοποιείται ήδη.';
+        // }
+        // if (strlen($this->password) < 8) {
+        //     $errors['password'] = 'Ο κωδικός πρόσβασης πρέπει να έχει τουλάχιστον 8 χαρακτήρες.';
+        // }
+
+        // // Αν υπάρχουν σφάλματα, τα επιστρέφουμε και σταματάμε
+        // if (!empty($errors)) {
+        //     return $errors;
+        // }
+
+        // Αν δεν υπάρχουν σφάλματα, συνεχίζουμε με την ενημέρωση στη βάση
+        // Δυναμική κατασκευή του query για να μην αλλάζει ο κωδικός αν δεν δοθεί νέος
+        // Αν δεν έχει δοθεί νέος κωδικός, δεν θα ενημερωθεί το πεδίο password_hash
+        $query = "UPDATE " . $this->table_name . "
+                  SET
+                    username = :username, email = :email, 
+                    first_name = :first_name, last_name = :last_name, 
+                    role_id = :role_id, status = :status";
+
+        if (!empty($this->password)) {
+            $query .= ", password_hash = :password_hash";
+        }
+
+        $query .= " WHERE id = :id";
+        
+        $stmt = $this->conn->prepare($query);
+
+        // --- Απολύμανση (Sanitization) των Δεδομένων ---
+        $this->username = htmlspecialchars(strip_tags($this->username));
+        $this->email = htmlspecialchars(strip_tags($this->email));
+        $this->first_name = htmlspecialchars(strip_tags($this->first_name));
+        $this->last_name = htmlspecialchars(strip_tags($this->last_name));
+        // $this->country = htmlspecialchars(strip_tags($this->country));
+        // $this->city = htmlspecialchars(strip_tags($this->city));
+        // $this->address = htmlspecialchars(strip_tags($this->address));
+        $this->role_id = htmlspecialchars(strip_tags($this->role_id));
+        $this->status = htmlspecialchars(strip_tags($this->status));
+        $this->id = htmlspecialchars(strip_tags($this->id));
+
+        // --- Σύνδεση (Binding) των Παραμέτρων ---
+        $stmt->bindParam(':username', $this->username);
+        $stmt->bindParam(':email', $this->email);
+        $stmt->bindParam(':first_name', $this->first_name);
+        $stmt->bindParam(':last_name', $this->last_name);
+        // $stmt->bindParam(':country', $this->country);
+        // $stmt->bindParam(':city', $this->city);
+        // $stmt->bindParam(':address', $this->address);
+        $stmt->bindParam(':role_id', $this->role_id);
+        $stmt->bindParam(':status', $this->status);
+        $stmt->bindParam(':id', $this->id);
+        
+        if (!empty($this->password)) {
+            $this->password_hash = password_hash($this->password, PASSWORD_BCRYPT);
+            $stmt->bindParam(':password_hash', $this->password_hash);
+        }
+        
+        // --- Εκτέλεση ---
+        if ($stmt->execute()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Διαγράφει έναν χρήστη, μόνο αν δεν έχει σχετιζόμενες εγγραφές.
+     * @return array ['success' => bool, 'message' => string]
+     */
+    public function delete() {
+        // Έλεγχος 1: Υπάρχουν κρατήσεις από τον χρήστη;
+        $check1 = "SELECT COUNT(*) as count FROM bookings WHERE user_id = :id";
+        $stmt1 = $this->conn->prepare($check1);
+        $stmt1->bindParam(':id', $this->id);
+        $stmt1->execute();
+        if ($stmt1->fetch(PDO::FETCH_ASSOC)['count'] > 0) {
+            return ['success' => false, 'message' => 'Ο χρήστης δεν μπορεί να διαγραφεί διότι έχει πραγματοποιήσει κρατήσεις.'];
+        }
+
+        // Έλεγχος 2: Έχει δημιουργήσει ανακοινώσεις (αν είναι admin);
+        $check2 = "SELECT COUNT(*) as count FROM announcements WHERE user_id = :id";
+        $stmt2 = $this->conn->prepare($check2);
+        $stmt2->bindParam(':id', $this->id);
+        $stmt2->execute();
+        if ($stmt2->fetch(PDO::FETCH_ASSOC)['count'] > 0) {
+            return ['success' => false, 'message' => 'Ο χρήστης δεν μπορεί να διαγραφεί διότι έχει δημιουργήσει ανακοινώσεις.'];
+        }
+
+        // Αν οι έλεγχοι περάσουν, προχωράμε στη διαγραφή
+        $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $this->id);
+
+        if ($stmt->execute()) {
+            return ['success' => true, 'message' => 'Ο χρήστης διαγράφηκε με επιτυχία.'];
+        }
+        
+        return ['success' => false, 'message' => 'Προέκυψε σφάλμα κατά τη διαγραφή.'];
+    }
+
+
     
 }

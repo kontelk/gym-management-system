@@ -567,6 +567,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const allUsersTbody = document.getElementById('all-users-tbody');
             const pendingCountBadge = document.getElementById('pending-count');
             const messageArea = document.getElementById('message-area');
+            const userModal = new bootstrap.Modal(document.getElementById('user-modal'));
+            const userForm = document.getElementById('user-form');
 
             // --- Φόρτωση χρηστών σε αναμονή ---
             function fetchPendingUsers() {
@@ -593,23 +595,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             }
 
-            // --- Φόρτωση όλων των χρηστών ---
+
+            // --- Φόρτωση όλων των χρηστών (ΕΝΗΜΕΡΩΜΕΝΗ) ---
             function fetchAllUsers() {
                  fetch(`${apiBaseUrl}/users/read.php`, { headers: { 'Authorization': `Bearer ${token}` } })
                     .then(res => res.json())
                     .then(data => {
                         allUsersTbody.innerHTML = '';
                         if (data.message) {
-                             allUsersTbody.innerHTML = `<tr><td colspan="5" class="text-center">${data.message}</td></tr>`;
+                             allUsersTbody.innerHTML = `<tr><td colspan="6" class="text-center">${data.message}</td></tr>`;
                         } else {
                             data.forEach(user => {
-                                const roleBadge = user.role_name ? `<span class="badge bg-info">${user.role_name}</span>` : '';
+                                const roleBadge = user.role_name ? `<span class="badge bg-info">${user.role_name}</span>` : '<span class="badge bg-secondary">Κανένας</span>';
                                 const row = `<tr>
                                     <td>${user.id}</td>
                                     <td>${user.username}</td>
                                     <td>${user.email}</td>
                                     <td>${roleBadge}</td>
                                     <td>${user.status}</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm edit-user-btn" data-user-id="${user.id}">Επεξεργασία</button>
+                                        <button class="btn btn-danger btn-sm delete-user-btn" data-user-id="${user.id}">Διαγραφή</button>
+                                    </td>
                                 </tr>`;
                                 allUsersTbody.innerHTML += row;
                             });
@@ -617,7 +624,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             }
 
-            // --- Event Listener για έγκριση ---
+
+
+
+            // Συνάρτηση για έγκριση χρήστη
+            function approveUser(userId) {
+                fetch(`${apiBaseUrl}/users/approve.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ user_id: userId, role_id: 2 }) // Εγκρίνουμε πάντα ως registered_user (ID=2)
+                })
+                .then(res => res.json().then(data => ({ status: res.status, body: data })))
+                .then(({ status, body }) => {
+                    messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+                    fetchAllUsers();
+                    fetchPendingUsers();
+                    setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                });
+            }
+            
+            function deleteUser(id) {
+                fetch(`${apiBaseUrl}/users/delete.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ id: id })
+                })
+                .then(res => res.json().then(data => ({status: res.status, body: data})))
+                .then(({status, body}) => {
+                    messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+                    fetchAllUsers();
+                });
+            }
+
+            // Event Listener για έγκριση
             pendingUsersTbody.addEventListener('click', function(e){
                 if(e.target && e.target.classList.contains('approve-btn')){
                     const userId = e.target.getAttribute('data-user-id');
@@ -627,31 +666,82 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // --- Συνάρτηση για έγκριση χρήστη ---
-            function approveUser(userId) {
-                fetch(`${apiBaseUrl}/users/approve.php`, {
+            
+            allUsersTbody.addEventListener('click', e => {
+                const userId = e.target.getAttribute('data-user-id');
+                if (e.target.classList.contains('edit-user-btn')) {
+                    // Κλήση στο νέο endpoint για να πάρουμε τα τρέχοντα δεδομένα του χρήστη
+                    fetch(`${apiBaseUrl}/users/read_one_admin.php?id=${userId}`, {
+                         headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.id) {
+                            // Γέμισμα της φόρμας του modal
+                            document.getElementById('user-id').value = data.id;
+                            document.getElementById('user-username').value = data.username;
+
+                            // (Προσθέστε εδώ τα id και για τα υπόλοιπα πεδία της φόρμας: email, first_name, κλπ)
+                            document.getElementById('user-email').value = data.email;
+                            document.getElementById('user-firstname').value = data.first_name;
+                            document.getElementById('user-lastname').value = data.last_name;
+                            
+                            document.getElementById('user-id').disabled = true; // Απενεργοποιούμε το πεδίο ID για επεξεργασία
+                            // document.getElementById('modal-title').textContent = 'Επεξεργασία Χρήστη';
+
+                            document.getElementById('user-role').value = data.role_id;
+                            document.getElementById('user-status').value = data.status;
+                            document.getElementById('user-password').value = ''; // Πάντα κενό για ασφάλεια
+                            userModal.show();
+                        }
+                    });
+                } else if (e.target.classList.contains('delete-user-btn')) {
+                    if(confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον χρήστη; Η ενέργεια είναι μη αναστρέψιμη.')){
+                        deleteUser(userId);
+                    }
+                }
+            });
+            
+            userForm.addEventListener('submit', e => {
+                e.preventDefault();
+                const formData = {
+                    id: document.getElementById('user-id').value,
+                    username: document.getElementById('user-username').value,
+
+                    // (Συλλέξτε εδώ και τις υπόλοιπες τιμές από τη φόρμα)
+                    email: document.getElementById('user-email').value,
+                    first_name: document.getElementById('user-firstname').value,
+                    last_name: document.getElementById('user-lastname').value,
+
+                    role_id: document.getElementById('user-role').value,
+                    status: document.getElementById('user-status').value,
+                    password: document.getElementById('user-password').value // Θα είναι κενό αν δεν αλλάζει ο κωδικός
+                };
+
+                fetch(`${apiBaseUrl}/users/update.php`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ user_id: userId, role_id: 2 }) // Εγκρίνουμε πάντα ως registered_user (ID=2)
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(formData)
                 })
-                .then(res => res.json().then(data => ({ status: res.status, body: data })))
-                .then(({ status, body }) => {
-                    messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
-                    // Ανανέωση και των δύο λιστών
-                    fetchPendingUsers();
+                .then(res => res.json())
+                .then(data => {
+                    messageArea.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                    userModal.hide();
                     fetchAllUsers();
-                    setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                    setTimeout(() => messageArea.innerHTML = '', 4000);
                 });
-            }
+            });
 
             // Αρχική φόρτωση όλων των δεδομένων
             fetchPendingUsers();
             fetchAllUsers();
         }
     }
+
+
+
+
+
 
 
 

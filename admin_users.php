@@ -26,12 +26,85 @@ include 'templates/header.php';
             </div>
         </div>
         <div class="tab-pane fade" id="all-users" role="tabpanel">
-             <div class="table-responsive mt-3">
+
+             <!-- <div class="table-responsive mt-3">
                 <table class="table table-striped">
                     <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Ρόλος</th><th>Κατάσταση</th></tr></thead>
                     <tbody id="all-users-tbody"></tbody>
                 </table>
+            </div> -->
+
+            
+            <table class="table table-striped">
+                <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Ρόλος</th><th>Κατάσταση</th><th>Ενέργειες</th></tr></thead>
+                <tbody id="all-users-tbody"></tbody>
+            </table>
+
+            
+            <div class="modal fade" id="user-modal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><em>Επεξεργασία Στοιχείων Χρήστη</em></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+
+                            <form id="user-form">
+                                <input type="hidden" id="user-id">
+
+                                 <div class="mb-3">
+                                    <label for="user-firstname" class="form-label">Όνομα(*)</label>
+                                    <input type="text" class="form-control" id="user-firstname" name="user-firstname" required autocomplete="off">
+                                    <div class="invalid-feedback">Το όνομα είναι υποχρεωτικό.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="user-lastname" class="form-label">Επώνυμο(*)</label>
+                                    <input type="text" class="form-control" id="user-lastname" name="user-lastname" required autocomplete="off">
+                                    <div class="invalid-feedback">Το επώνυμο είναι υποχρεωτικό.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="user-username" class="form-label">Username(*)</label>
+                                    <input type="text" class="form-control" id="user-username" name="user-username" required minlength="5" autocomplete="off">
+                                    <div class="invalid-feedback">Απαιτείται όνομα χρήστη με τουλάχιστον 5 χαρακτήρες.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="user-password" class="form-label">Νέος Κωδικός (προαιρετικά)</label>
+                                    <input type="password" class="form-control" id="user-password">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="user-email" class="form-label">Email(*)</label>
+                                    <input type="email" class="form-control" id="user-email" name="user-email" required autocomplete="off">
+                                    <div class="invalid-feedback">Το email είναι υποχρεωτικό και πρέπει να είναι έγκυρο.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="user-role" class="form-label">Ρόλος(*)</label>
+                                    <select class="form-select" id="user-role" required>
+                                        <option value="1">Admin</option>
+                                        <option value="2">Registered User</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="user-status" class="form-label">Κατάσταση(*)</label>
+                                    <select class="form-select" id="user-status" required>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Αποθήκευση Αλλαγών</button>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 </div>
