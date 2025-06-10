@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (decodedToken.data.role_id === 1) {
                             window.location.href = 'admin_dashboard.php';
                         } else {
-                            window.location.href = 'dashboard.php';
+                            window.location.href = 'index.php';
                         }
                     }, 1000); // Μικρή καθυστέρηση για να δει ο χρήστης το μήνυμα
 
@@ -716,45 +716,63 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // =================================================================
-    // 9. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΠΡΟΓΡΑΜΜΑΤΟΣ (ADMIN SCHEDULE)
+    // 9. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΠΡΟΓΡΑΜΜΑΤΟΣ (ADMIN SCHEDULE) - ΠΛΗΡΗΣ ΚΩΔΙΚΑΣ
     // =================================================================
     if (document.getElementById('admin-schedule-page-identifier')) {
         const token = localStorage.getItem('jwt');
-        if (!token || parseJwt(token).data.role_id !== 1) {
+        const decodedToken = token ? parseJwt(token) : null;
+
+        // --- Προστασία Σελίδας ---
+        if (!token || !decodedToken || decodedToken.data.role_id !== 1) {
             window.location.href = 'index.php';
             return;
         }
         
+        // --- DOM Element Selectors ---
         const weekPicker = document.getElementById('week-picker');
         const scheduleContainer = document.getElementById('schedule-container');
         const eventModal = new bootstrap.Modal(document.getElementById('event-modal'));
         const eventForm = document.getElementById('event-form');
+        const toggleSwitch = document.getElementById('toggle-individual-programs');
+
+        // --- State Variable ---
+        // Μεταβλητή που θα κρατάει τα δεδομένα της εβδομάδας για να μην κάνουμε συνέχεια API calls
+        let currentScheduleData = [];
+
+        // --- Functions ---
         
-        // --- Φόρτωση δεδομένων για τα dropdowns της φόρμας ---
         function populateFormDropdowns() {
             const programSelect = document.getElementById('event-program');
             const trainerSelect = document.getElementById('event-trainer');
-            // Φόρτωση προγραμμάτων
+            
+            // Φόρτωση προγραμμάτων (μόνο τα ενεργά, ομαδικά)
             fetch(`${apiBaseUrl}/programs/read_admin.php`, { headers: { 'Authorization': `Bearer ${token}` } })
-                .then(res=>res.json()).then(data => {
+                .then(res => res.json())
+                .then(data => {
                     programSelect.innerHTML = '<option value="">Επιλέξτε...</option>';
-                    data.filter(p => p.is_active).forEach(p => programSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`);
+                    data.filter(p => p.is_active && p.type === 'group').forEach(p => {
+                        programSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                    });
                 });
+                
             // Φόρτωση γυμναστών
-            fetch(`${apiBaseUrl}/trainers/read.php`).then(res=>res.json()).then(data => {
-                trainerSelect.innerHTML = '<option value="">Κανένας</option>';
-                data.forEach(t => trainerSelect.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
-            });
+            fetch(`${apiBaseUrl}/trainers/read.php`)
+                .then(res => res.json())
+                .then(data => {
+                    trainerSelect.innerHTML = '<option value="">Κανένας</option>';
+                    data.forEach(t => {
+                        trainerSelect.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`;
+                    });
+                });
         }
         
-        // --- Λογική του Week Picker ---
         function getWeekDates(weekString) {
             const year = parseInt(weekString.substring(0, 4));
             const week = parseInt(weekString.substring(6));
-            const d = new Date(year, 0, 1 + (week - 1) * 7);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-            const monday = new Date(d.setDate(diff));
+            const d = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+            const day = d.getUTCDay();
+            const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            const monday = new Date(d.setUTCDate(diff));
             const sunday = new Date(new Date(monday).setDate(monday.getDate() + 6));
             return {
                 start: monday.toISOString().split('T')[0],
@@ -762,43 +780,62 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
         
-        // --- Φόρτωση του προγράμματος της εβδομάδας ---
         function fetchSchedule(start, end) {
             scheduleContainer.innerHTML = `<p class="text-center">Φόρτωση προγράμματος...</p>`;
             fetch(`${apiBaseUrl}/events/read_admin.php?start=${start}&end=${end}`, { headers: { 'Authorization': `Bearer ${token}` } })
                 .then(res => res.json())
                 .then(data => {
-                    renderSchedule(data);
+                    // Αποθηκεύουμε τα δεδομένα στην state variable
+                    currentScheduleData = data.message ? [] : data;
+                    // Καλουμε τη render για να τα εμφανίσει
+                    renderSchedule();
                 });
         }
         
-        // --- Απόδοση του προγράμματος στο UI ---
-        function renderSchedule(events) {
+        function renderSchedule() {
             scheduleContainer.innerHTML = '';
+            
+            const showIndividual = toggleSwitch.checked;
+            
+            const eventsToRender = currentScheduleData.filter(event => {
+                if (showIndividual) return true; // Εμφάνισε τα πάντα
+                return event.program_type === 'group'; // Εμφάνισε μόνο τα ομαδικά
+            });
+            
+            if (eventsToRender.length === 0) {
+                 scheduleContainer.innerHTML = `<p class="text-center text-muted">Δεν υπάρχουν events για εμφάνιση με τα τρέχοντα φίλτρα.</p>`;
+                 return;
+            }
+
             const days = ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο', 'Κυριακή'];
             const eventsByDay = Array.from({ length: 7 }, () => []);
-            events.forEach(event => {
-                const dayIndex = (new Date(event.start_time).getDay() + 6) % 7; // Δευτέρα = 0
+            
+            eventsToRender.forEach(event => {
+                const dayIndex = (new Date(event.start_time).getDay() + 6) % 7;
                 eventsByDay[dayIndex].push(event);
             });
 
             for (let i = 0; i < 7; i++) {
                 let dayHtml = `<div class="day-column mb-3"><h4>${days[i]}</h4>`;
                 if(eventsByDay[i].length === 0){
-                    dayHtml += `<p class="text-muted">Κανένα event.</p>`;
+                    dayHtml += `<p class="text-muted small">Κανένα event.</p>`;
                 } else {
+                    eventsByDay[i].sort((a,b) => new Date(a.start_time) - new Date(b.start_time)); // Ταξινόμηση ανά ώρα
                     eventsByDay[i].forEach(event => {
-                        dayHtml += `<div class="card mb-2">
-                            <div class="card-body">
-                                <h6 class="card-title">${event.program_name}</h6>
-                                <p class="card-text mb-1">
-                                    <small>${new Date(event.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(event.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
-                                </p>
-                                <p class="card-text mb-1"><small>Γυμναστής: ${event.trainer_name || 'N/A'}</small></p>
-                                <p class="card-text mb-2"><small>Κρατήσεις: ${event.current_bookings} / ${event.max_capacity}</small></p>
-                                <button class="btn btn-danger btn-sm delete-event-btn" data-id="${event.id}">Διαγραφή</button>
-                            </div>
-                        </div>`;
+                        const programTypeDisplay = event.program_type === 'group' ? 'Ομαδικό' : 'Ατομικό';
+                        const title = `${event.program_name} (${programTypeDisplay})`;
+                        const capacityText = event.max_capacity === null ? 'Απεριόριστες' : event.max_capacity;
+                        const cardColorClass = event.program_type === 'group' ? 'bg-danger-subtle' : 'bg-success-subtle';
+                        
+                        dayHtml += `<div class="card mb-2 ${cardColorClass}">
+                                        <div class="card-body">
+                                            <h6 class="card-title">${title}</h6>
+                                            <p class="card-text mb-1"><small>${new Date(event.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(event.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small></p>
+                                            <p class="card-text mb-1"><small>Γυμναστής: ${event.trainer_name || 'N/A'}</small></p>
+                                            <p class="card-text mb-2"><small>Κρατήσεις: ${event.current_bookings} / ${capacityText}</small></p>
+                                            <button class="btn btn-danger btn-sm delete-event-btn" data-id="${event.id}">Διαγραφή</button>
+                                        </div>
+                                    </div>`;
                     });
                 }
                 dayHtml += '</div>';
@@ -807,11 +844,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // --- Event Listeners ---
+        
         document.getElementById('add-event-btn').addEventListener('click', () => {
             eventForm.reset();
+            document.getElementById('modal-title').textContent = 'Προσθήκη Event';
             eventModal.show();
         });
-        
+
+        toggleSwitch.addEventListener('change', () => {
+            renderSchedule();
+        });
+
         weekPicker.addEventListener('change', () => {
             const weekDates = getWeekDates(weekPicker.value);
             fetchSchedule(weekDates.start, weekDates.end);
@@ -835,6 +878,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     eventModal.hide();
                     const weekDates = getWeekDates(weekPicker.value);
                     fetchSchedule(weekDates.start, weekDates.end);
+                } else {
+                    alert('Σφάλμα κατά τη δημιουργία του event.');
                 }
             });
         });
@@ -851,6 +896,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (res.ok) {
                            const weekDates = getWeekDates(weekPicker.value);
                            fetchSchedule(weekDates.start, weekDates.end);
+                        } else {
+                           alert('Σφάλμα κατά τη διαγραφή του event.');
                         }
                     });
                 }
@@ -858,20 +905,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // --- Αρχική Φόρτωση ---
+        
         populateFormDropdowns();
-        // Ορίζουμε την τρέχουσα εβδομάδα ως προεπιλογή
+        
         const now = new Date();
-        const firstDay = new Date(now.setDate(now.getDate() - now.getDay() + 1));
-        const year = firstDay.getFullYear();
-        const week = Math.ceil((((firstDay - new Date(year, 0, 1)) / 86400000) + 1) / 7);
+        const firstDayOfWeek = new Date(now.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1)));
+        const year = firstDayOfWeek.getFullYear();
+        const d1 = new Date(year, 0, 1);
+        const days = Math.floor((firstDayOfWeek - d1) / (24 * 60 * 60 * 1000));
+        const week = Math.ceil((days + d1.getDay() + 1) / 7);
+        
         const currentWeekString = `${year}-W${String(week).padStart(2, '0')}`;
         weekPicker.value = currentWeekString;
+
         const weekDates = getWeekDates(weekPicker.value);
         fetchSchedule(weekDates.start, weekDates.end);
     }
-
-
-
 
 
 
@@ -993,10 +1042,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
     // =================================================================
-    // 11. ΛΟΓΙΚΗ ΦΟΡΤΩΣΗΣ ΑΝΑΚΟΙΝΩΣΕΩΝ ΣΤΗΝ ΑΡΧΙΚΗ ΣΕΛΙΔΑ
+    // 11. ΛΟΓΙΚΗ ΦΟΡΤΩΣΗΣ ΑΝΑΚΟΙΝΩΣΕΩΝ ΣΤΗΝ ΑΡΧΙΚΗ ΣΕΛΙΔΑ (ΕΝΗΜΕΡΩΜΕΝΗ)
     // =================================================================
     const announcementsContainer = document.getElementById('announcements-container');
 
@@ -1009,15 +1056,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 announcementsContainer.innerHTML = ''; // Καθαρισμός του container
                 
-                // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
                 if (data.message) {
                     announcementsContainer.innerHTML = `<div class="list-group-item">${data.message}</div>`;
                     return;
                 }
 
                 data.forEach(announcement => {
+                    // **ΑΛΛΑΓΗ ΕΔΩ: Προσθέσαμε την κλάση 'bg-warning-subtle'**
                     const item = `
-                        <div class="list-group-item list-group-item-action flex-column align-items-start mb-2">
+                        <div class="list-group-item list-group-item-action flex-column align-items-start mb-2 bg-warning-subtle">
                             <div class="d-flex w-100 justify-content-between">
                                 <h5 class="mb-1">${announcement.title}</h5>
                                 <small>${new Date(announcement.created_at).toLocaleDateString('el-GR')}</small>
@@ -1034,8 +1081,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 announcementsContainer.innerHTML = '<div class="alert alert-danger">Αδυναμία φόρτωσης των ανακοινώσεων.</div>';
             });
     }
-
-
 
 
 

@@ -50,7 +50,7 @@ class Event {
                   GROUP BY
                     e.id
                   HAVING
-                    available_slots > 0
+                    (available_slots > 0 or e.max_capacity IS NULL) -- Ελέγχουμε αν υπάρχουν διαθέσιμες θέσεις ή αν η μέγιστη χωρητικότητα είναι NULL (π.χ. για ατομικά προγράμματα)
                   ORDER BY
                     e.start_time ASC";
 
@@ -102,8 +102,19 @@ class Event {
      * @return PDOStatement
      */
     public function readByDateRange($start_date, $end_date) {
+        // $query = "SELECT
+        //             e.id, p.name AS program_name, CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
+        //             e.start_time, e.end_time, e.max_capacity, COUNT(b.id) AS current_bookings
+        //           FROM " . $this->table_name . " e
+        //           JOIN programs p ON e.program_id = p.id
+        //           LEFT JOIN trainers t ON e.trainer_id = t.id
+        //           LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
+        //           WHERE DATE(e.start_time) BETWEEN :start_date AND :end_date
+        //           GROUP BY e.id
+        //           ORDER BY e.start_time ASC";
         $query = "SELECT
-                    e.id, p.name AS program_name, CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
+                    e.id, p.name AS program_name, p.type AS program_type, 
+                    CONCAT(t.first_name, ' ', t.last_name) AS trainer_name,
                     e.start_time, e.end_time, e.max_capacity, COUNT(b.id) AS current_bookings
                   FROM " . $this->table_name . " e
                   JOIN programs p ON e.program_id = p.id
@@ -131,6 +142,54 @@ class Event {
         // Προσοχή: Η διαγραφή ενός event θα διαγράψει και τις κρατήσεις του (ON DELETE CASCADE).
         // Ενημερώνουμε τον διαχειριστή για αυτό στο UI.
         return $stmt->execute();
+    }
+
+
+
+
+    /**
+     * Διασφαλίζει ότι υπάρχουν ωριαία slots για ένα ατομικό πρόγραμμα σε μια ημερομηνία,
+     * δημιουργώντας τα αν δεν υπάρχουν.
+     * @param int $program_id
+     * @param string $date
+     * @return void
+     */
+    public function ensureIndividualSlotsExist($program_id, $date) {
+        // Έλεγχος αν υπάρχουν ήδη slots για αυτό το πρόγραμμα και αυτή την ημερομηνία
+        $check_query = "SELECT COUNT(id) as count FROM " . $this->table_name . " WHERE program_id = :program_id AND DATE(start_time) = :search_date";
+        $stmt_check = $this->conn->prepare($check_query);
+        $stmt_check->bindParam(':program_id', $program_id);
+        $stmt_check->bindParam(':search_date', $date);
+        $stmt_check->execute();
+        
+        $count = $stmt_check->fetch(PDO::FETCH_ASSOC)['count'];
+
+        // Αν δεν υπάρχουν (count == 0), τα δημιουργούμε
+        if ($count == 0) {
+            $this->conn->beginTransaction();
+            try {
+                $insert_query = "INSERT INTO " . $this->table_name . " (program_id, start_time, end_time, max_capacity) VALUES (:program_id, :start_time, :end_time, NULL)";
+                $stmt_insert = $this->conn->prepare($insert_query);
+                
+                // Δημιουργία ωριαίων slots από τις 08:00 έως τις 22:00
+                for ($hour = 8; $hour <= 21; $hour++) {
+                    $start_hour = str_pad($hour, 2, '0', STR_PAD_LEFT);
+                    $end_hour = str_pad($hour + 1, 2, '0', STR_PAD_LEFT);
+                    
+                    $start_time = $date . ' ' . $start_hour . ':00:00';
+                    $end_time = $date . ' ' . $end_hour . ':00:00';
+                    
+                    $stmt_insert->bindParam(':program_id', $program_id);
+                    $stmt_insert->bindParam(':start_time', $start_time);
+                    $stmt_insert->bindParam(':end_time', $end_time);
+                    $stmt_insert->execute();
+                }
+                $this->conn->commit();
+            } catch (Exception $e) {
+                $this->conn->rollBack();
+                // Μπορούμε να χειριστούμε το σφάλμα, π.χ. με logging
+            }
+        }
     }
 
 

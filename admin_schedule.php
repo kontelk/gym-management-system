@@ -7,10 +7,23 @@
         <button id="add-event-btn" class="btn btn-success">Προσθήκη Event</button>
     </div>
     
-    <div class="row mb-3">
+    <!-- <div class="row mb-3">
         <div class="col-md-4">
              <label for="week-picker" class="form-label">Επιλογή Εβδομάδας</label>
              <input type="week" class="form-control" id="week-picker">
+        </div>
+    </div> -->
+
+    <div class="row mb-3 align-items-end">
+        <div class="col-md-4">
+             <label for="week-picker" class="form-label">Επιλογή Εβδομάδας</label>
+             <input type="week" class="form-control" id="week-picker">
+        </div>
+        <div class="col-md-4">
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" role="switch" id="toggle-individual-programs" checked>
+              <label class="form-check-label" for="toggle-individual-programs">Εμφάνιση Ατομικών Προγραμμάτων</label>
+            </div>
         </div>
     </div>
     

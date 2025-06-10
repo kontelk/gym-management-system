@@ -42,7 +42,12 @@ class Booking {
             $stmt->execute();
             $booking_count = $stmt->fetch(PDO::FETCH_ASSOC)['confirmed_bookings'];
 
-            if ($booking_count >= $event['max_capacity']) {
+            // if ($booking_count >= $event['max_capacity']) {         // εγινε refactoring για να μην ελέγχεται το max_capacity αν είναι NULL
+            //     throw new Exception("Το τμήμα είναι ήδη γεμάτο.");
+            // }
+            
+            // Έλεγχος χωρητικότητας μόνο αν το max_capacity ΔΕΝ είναι NULL
+            if ($event['max_capacity'] !== null && $booking_count >= $event['max_capacity']) {
                 throw new Exception("Το τμήμα είναι ήδη γεμάτο.");
             }
 
