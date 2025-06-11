@@ -775,12 +775,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>${p.type === 'group' ? 'Ομαδικό' : 'Ατομικό'}</td>
                             <td>${statusBadge}</td>
                             <td>
-                                <button class="btn btn-primary btn-sm edit-btn" data-id="${p.id}">Επεξεργασία</button>
-                                ${p.is_active ? `<button class="btn btn-danger btn-sm delete-btn" data-id="${p.id}">Απενεργοποίηση</button>` : ''}
+                                
+                                <a href="#" class="edit-btn me-2" data-id="${p.id}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="18"></a>
+                                ${p.is_active ? `<a href="#" class="disable-btn me-2" data-id="${p.id}" data-bs-toggle="tooltip" data-bs-title="Απενεργοποίηση"><img src="icons/disable.png" alt="Απενεργοποίηση" width="18"></a>` : ''}
                             </td>
                         </tr>`;
                         programsTbody.innerHTML += row;
                     });
+                    // Ενεργοποίηση tooltip για τα εικονίδια
+                    const tooltipTriggerList = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')];
+                    tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
                 });
         }
         
@@ -795,12 +799,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Event listener για επεξεργασία και διαγραφή
         programsTbody.addEventListener('click', e => {
-            const target = e.target;
-            const id = target.getAttribute('data-id');
+            const targetLink = e.target.closest('a');
+            if (!targetLink) return;
+            const id = targetLink.getAttribute('data-id');
 
-            if (target.classList.contains('edit-btn')) {
+            if (targetLink.classList.contains('edit-btn')) {
                 // Φόρτωση δεδομένων για επεξεργασία
-                fetch(`${apiBaseUrl}/programs/read_one.php?id=${id}`)
+                fetch(`${apiBaseUrl}/programs/read_one.php?id=${id}`, { headers: { 'Authorization': `Bearer ${token}` } })
                     .then(res => res.json())
                     .then(p => {
                         document.getElementById('program-id').value = p.id;
@@ -812,10 +817,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('modal-title').textContent = 'Επεξεργασία Προγράμματος';
                         programModal.show();
                     });
-            } else if (target.classList.contains('delete-btn')) {
+            } else if (targetLink.classList.contains('disable-btn')) {
                 // Επιβεβαίωση διαγραφής
                 if (confirm('Είστε σίγουροι ότι θέλετε να απενεργοποιήσετε αυτό το πρόγραμμα;')) {
-                    fetch(`${apiBaseUrl}/programs/delete.php`, {
+                    fetch(`${apiBaseUrl}/programs/disable.php`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1127,8 +1132,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <td>${a.author}</td>
                                 <td>${new Date(a.created_at).toLocaleDateString('el-GR')}</td>
                                 <td>
-                                    <button class="btn btn-primary btn-sm edit-btn" data-id="${a.id}">Επεξεργασία</button>
-                                    <button class="btn btn-danger btn-sm delete-btn" data-id="${a.id}">Διαγραφή</button>
+                                    
+                                    <a href="#" class="edit-btn me-2" data-id="${a.id}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="18"></a>
+                                    <a href="#" class="delete-btn" data-id="${a.id}" data-bs-toggle="tooltip" data-bs-title="Διαγραφή"><img src="icons/bin.png" alt="Διαγραφή" width="18"></a>
                                 </td>
                             </tr>`;
                             announcementsTbody.innerHTML += row;
@@ -1145,10 +1151,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         announcementsTbody.addEventListener('click', e => {
-            const target = e.target;
-            const id = target.getAttribute('data-id');
+            const targetLink = e.target.closest('a');
+            if (!targetLink) return;
+            const id = targetLink.getAttribute('data-id');
 
-            if (target.classList.contains('edit-btn')) {
+            if (targetLink.classList.contains('edit-btn')) {
                 // Φόρτωση δεδομένων για επεξεργασία
                 fetch(`${apiBaseUrl}/announcements/read_one.php?id=${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -1163,7 +1170,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         announcementModal.show();
                     }
                 });
-            } else if (target.classList.contains('delete-btn')) {
+            } else if (targetLink.classList.contains('delete-btn')) {
                 if(confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε οριστικά αυτή την ανακοίνωση;')){
                     fetch(`${apiBaseUrl}/announcements/delete.php`, {
                         method: 'POST',
@@ -1251,6 +1258,116 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error fetching announcements:', error);
                 announcementsContainer.innerHTML = '<div class="alert alert-danger">Αδυναμία φόρτωσης των ανακοινώσεων.</div>';
             });
+    }
+
+
+
+    // =================================================================
+    // 12. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΓΥΜΝΑΣΤΩΝ (ADMIN)
+    // =================================================================
+    if (document.getElementById('admin-trainers-page-identifier')) {
+        const token = localStorage.getItem('jwt');
+        if (!token || parseJwt(token).data.role_id !== 1) {
+            window.location.href = 'index.php';
+            return;
+        }
+
+        const trainersTbody = document.getElementById('trainers-tbody');
+        const messageArea = document.getElementById('message-area');
+        const trainerModal = new bootstrap.Modal(document.getElementById('trainer-modal'));
+        const trainerForm = document.getElementById('trainer-form');
+
+        function fetchTrainers() {
+            // Χρησιμοποιούμε το δημόσιο endpoint που φέρνει όλους τους γυμναστές
+            fetch(`${apiBaseUrl}/trainers/read.php`)
+                .then(res => res.json())
+                .then(data => {
+                    trainersTbody.innerHTML = '';
+                    if (data.length === 0) {
+                        trainersTbody.innerHTML = `<tr><td colspan="4" class="text-center">Δεν βρέθηκαν γυμναστές.</td></tr>`;
+                    } else {
+                        data.forEach(t => {
+                            const row = `<tr>
+                                
+                                <td>${t.last_name}</td>
+                                <td>${t.first_name}</td>
+                                <td>
+                                    <a href="#" class="edit-trainer-btn me-2" data-id="${t.id}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="18"></a>
+                                    <a href="#" class="delete-trainer-btn" data-id="${t.id}" data-bs-toggle="tooltip" data-bs-title="Διαγραφή"><img src="icons/bin.png" alt="Διαγραφή" width="18"></a>
+                                </td>
+                            </tr>`;
+                            trainersTbody.innerHTML += row;
+                        });
+                        // Αρχικοποίηση των tooltips
+                        const tooltipTriggerList = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')];
+                        tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+                    }
+                });
+        }
+        
+        document.getElementById('add-trainer-btn').addEventListener('click', () => {
+            trainerForm.reset();
+            document.getElementById('trainer-id').value = '';
+            document.getElementById('modal-title').textContent = 'Προσθήκη Νέου Γυμναστή';
+            trainerModal.show();
+        });
+
+        // Event listener για επεξεργασία και διαγραφή
+        trainersTbody.addEventListener('click', e => {
+            const targetLink = e.target.closest('a');
+            if (!targetLink) return;
+            const id = targetLink.getAttribute('data-id');
+
+            if (targetLink.classList.contains('edit-trainer-btn')) {
+                e.preventDefault();
+                // Φόρτωση δεδομένων για επεξεργασία
+                fetch(`${apiBaseUrl}/trainers/read_one.php?id=${id}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                    .then(res => res.json())
+                    .then(t => {
+                        document.getElementById('trainer-id').value = t.id;
+                        document.getElementById('trainer-first-name').value = t.first_name;
+                        document.getElementById('trainer-last-name').value = t.last_name;
+                        document.getElementById('trainer-bio').value = t.bio;
+                        document.getElementById('modal-title').textContent = 'Επεξεργασία Γυμναστή';
+                        trainerModal.show();
+                    });
+            } else if (targetLink.classList.contains('delete-trainer-btn')) {
+                e.preventDefault();
+                if(confirm('Είστε σίγουροι; Η διαγραφή ενός γυμναστή θα τον αφαιρέσει από τα events που έχει αναλάβει.')){
+                    fetch(`${apiBaseUrl}/trainers/delete.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+                        body: JSON.stringify({ id: id })
+                    }).then(res => res.json()).then(data => {
+                        messageArea.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                        fetchTrainers();
+                    });
+                }
+            }
+        });
+
+        trainerForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const id = document.getElementById('trainer-id').value;
+            const url = id ? `${apiBaseUrl}/trainers/update.php` : `${apiBaseUrl}/trainers/create.php`;
+            const formData = {
+                id: id || undefined,
+                first_name: document.getElementById('trainer-first-name').value,
+                last_name: document.getElementById('trainer-last-name').value,
+                bio: document.getElementById('trainer-bio').value
+            };
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(formData)
+            }).then(res => res.json()).then(data => {
+                messageArea.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                trainerModal.hide();
+                fetchTrainers();
+            });
+        });
+        
+        fetchTrainers();
     }
 
 

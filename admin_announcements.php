@@ -16,17 +16,17 @@
 
 <div class="modal fade" id="announcement-modal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content bg-light">
             <div class="modal-header"><h5 class="modal-title" id="modal-title">Προσθήκη Ανακοίνωσης</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 <form id="announcement-form">
                     <input type="hidden" id="announcement-id">
                     <div class="mb-3">
-                        <label for="announcement-title" class="form-label">Τίτλος</label>
+                        <label for="announcement-title" class="form-label">Τίτλος (*)</label>
                         <input type="text" class="form-control" id="announcement-title" required>
                     </div>
                     <div class="mb-3">
-                        <label for="announcement-content" class="form-label">Περιεχόμενο</label>
+                        <label for="announcement-content" class="form-label">Περιεχόμενο (*)</label>
                         <textarea class="form-control" id="announcement-content" rows="5" required></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Αποθήκευση</button>

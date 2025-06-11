@@ -41,6 +41,16 @@ include 'templates/header.php';
         <div class="col-md-4 mb-3">
             <div class="card bg-primary-subtle">
                 <div class="card-body">
+                    <h5 class="card-title"><em>Διαχείριση Γυμναστών</em></h5>
+                    <p class="card-text">Προσθήκη, επεξεργασία και διαγραφή των γυμναστών του συστήματος.</p>
+                    <a href="admin_trainers.php" class="btn btn-primary">Μετάβαση</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card bg-primary-subtle">
+                <div class="card-body">
                     <h5 class="card-title"><em>Διαχείριση Ανακοινώσεων</em></h5>
                     <p class="card-text">Δημιουργία, επεξεργασία και διαγραφή νέων και προσφορών για τους χρήστες.</p>
                     <a href="admin_announcements.php" class="btn btn-primary">Μετάβαση</a>

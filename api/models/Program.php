@@ -104,10 +104,15 @@ class Program {
         $this->is_active = htmlspecialchars(strip_tags($this->is_active));
         $this->id = htmlspecialchars(strip_tags($this->id));
 
+        // Για το is_active, μετατρέπουμε την τιμή σε TRUE ή FALSE για τη βάση δεδομένων
+        // Αν η τιμή είναι '1', τότε είναι TRUE, αλλιώς FALSE.
+        $is_active_value = ($this->is_active == '1') ? 'TRUE' : 'FALSE';
+
         $stmt->bindParam(':name', $this->name);
         $stmt->bindParam(':description', $this->description);
         $stmt->bindParam(':type', $this->type);
-        $stmt->bindParam(':is_active', $this->is_active);
+        // $stmt->bindParam(':is_active', $this->is_active);
+        $stmt->bindParam(':is_active', $is_active_value);
         $stmt->bindParam(':id', $this->id);
 
         return $stmt->execute();
@@ -117,7 +122,7 @@ class Program {
      * Απενεργοποιεί ένα πρόγραμμα (soft delete).
      * @return bool True αν η απενεργοποίηση ήταν επιτυχής, αλλιώς false.
      */
-    public function delete() {
+    public function disable() {
         // Χρησιμοποιούμε soft delete για να μην χαθούν οι συνδέσεις με παλιές κρατήσεις.
         // Απλά θέτουμε το is_active σε FALSE.
         $query = "UPDATE " . $this->table_name . " SET is_active = FALSE WHERE id = :id";

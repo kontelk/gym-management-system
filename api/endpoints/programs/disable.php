@@ -1,6 +1,6 @@
 <?php
 // =================================================================
-// Endpoint: /programs/delete.php (Protected, Admin Only)
+// Endpoint: /programs/disable.php (Protected, Admin Only)
 // Method: POST
 // Περιγραφή: Απενεργοποιεί (soft delete) ένα πρόγραμμα.
 // =================================================================
@@ -33,7 +33,7 @@ if (!empty($data->id)) {
     $program->id = $data->id;
 
     // Προσπάθεια διαγραφής (απενεργοποίησης)
-    if ($program->delete()) {
+    if ($program->disable()) {
         http_response_code(200); // 200 OK
         echo json_encode(["message" => "Το πρόγραμμα απενεργοποιήθηκε."]);
     } else {

@@ -43,7 +43,7 @@ include 'templates/header.php';
             
             <div class="modal fade" id="user-modal" tabindex="-1">
                 <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
+                    <div class="modal-content bg-light">
                         <div class="modal-header">
                             <h5 class="modal-title"><em>Επεξεργασία Στοιχείων Χρήστη</em></h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -51,6 +51,7 @@ include 'templates/header.php';
                         <div class="modal-body">
 
                             <form id="user-form">
+                                
                                 <input type="hidden" id="user-id">
 
                                  <div class="mb-3">
