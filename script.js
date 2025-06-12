@@ -614,15 +614,61 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <td>${roleBadge}</td>
                                     <td>${user.status}</td>
                                     <td>
-                                        <button class="btn btn-primary btn-sm edit-user-btn" data-user-id="${user.id}">Επεξεργασία</button>
-                                        <button class="btn btn-danger btn-sm delete-user-btn" data-user-id="${user.id}">Διαγραφή</button>
+                                        <a href="#" class="edit-btn me-2" data-id="${user.id}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="18"></a>
+                                        <a href="#" class="delete-btn" data-id="${user.id}" data-bs-toggle="tooltip" data-bs-title="Διαγραφή"><img src="icons/bin.png" alt="Διαγραφή" width="18"></a>
                                     </td>
                                 </tr>`;
                                 allUsersTbody.innerHTML += row;
                             });
+                            // Αρχικοποίηση των tooltips
+                            const tooltipTriggerList = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')];
+                            tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
                         }
                     });
             }
+
+
+
+            // Event Listeners για επεξεργασία και διαγραφή χρηστών
+            allUsersTbody.addEventListener('click', e => {
+                const targetLink = e.target.closest('a');
+                if (!targetLink) return;
+                const userId = targetLink.getAttribute('data-id');
+                console.log(`User ID: ${userId}`); // Για debugging
+                if (!userId) return; // Αν δεν υπάρχει ID, σταματάμε την εκτέλεση
+                if (targetLink.classList.contains('edit-btn')) {
+
+                    // Κλήση στο νέο endpoint για να πάρουμε τα τρέχοντα δεδομένα του χρήστη
+                    fetch(`${apiBaseUrl}/users/read_one_admin.php?id=${userId}`, {
+                         headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.id) {
+                            // Γέμισμα της φόρμας του modal
+                            document.getElementById('user-id').value = data.id;
+                            document.getElementById('user-username').value = data.username;
+
+                            // (Προσθέστε εδώ τα id και για τα υπόλοιπα πεδία της φόρμας: email, first_name, κλπ)
+                            document.getElementById('user-email').value = data.email;
+                            document.getElementById('user-firstname').value = data.first_name;
+                            document.getElementById('user-lastname').value = data.last_name;
+                            
+                            document.getElementById('user-id').disabled = true; // Απενεργοποιούμε το πεδίο ID για επεξεργασία
+                            // document.getElementById('modal-title').textContent = 'Επεξεργασία Χρήστη';
+
+                            document.getElementById('user-role').value = data.role_id;
+                            document.getElementById('user-status').value = data.status;
+                            document.getElementById('user-password').value = ''; // Πάντα κενό για ασφάλεια
+                            userModal.show();
+                        }
+                    });
+                } else if (targetLink.classList.contains('delete-btn')) {
+                    if(confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον χρήστη; Η ενέργεια είναι μη αναστρέψιμη.')){
+                        deleteUser(userId);
+                    }
+                }
+            });
 
 
 
@@ -667,40 +713,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             
-            allUsersTbody.addEventListener('click', e => {
-                const userId = e.target.getAttribute('data-user-id');
-                if (e.target.classList.contains('edit-user-btn')) {
-                    // Κλήση στο νέο endpoint για να πάρουμε τα τρέχοντα δεδομένα του χρήστη
-                    fetch(`${apiBaseUrl}/users/read_one_admin.php?id=${userId}`, {
-                         headers: { 'Authorization': `Bearer ${token}` }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if(data.id) {
-                            // Γέμισμα της φόρμας του modal
-                            document.getElementById('user-id').value = data.id;
-                            document.getElementById('user-username').value = data.username;
-
-                            // (Προσθέστε εδώ τα id και για τα υπόλοιπα πεδία της φόρμας: email, first_name, κλπ)
-                            document.getElementById('user-email').value = data.email;
-                            document.getElementById('user-firstname').value = data.first_name;
-                            document.getElementById('user-lastname').value = data.last_name;
-                            
-                            document.getElementById('user-id').disabled = true; // Απενεργοποιούμε το πεδίο ID για επεξεργασία
-                            // document.getElementById('modal-title').textContent = 'Επεξεργασία Χρήστη';
-
-                            document.getElementById('user-role').value = data.role_id;
-                            document.getElementById('user-status').value = data.status;
-                            document.getElementById('user-password').value = ''; // Πάντα κενό για ασφάλεια
-                            userModal.show();
-                        }
-                    });
-                } else if (e.target.classList.contains('delete-user-btn')) {
-                    if(confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον χρήστη; Η ενέργεια είναι μη αναστρέψιμη.')){
-                        deleteUser(userId);
-                    }
-                }
-            });
+            
             
             userForm.addEventListener('submit', e => {
                 e.preventDefault();

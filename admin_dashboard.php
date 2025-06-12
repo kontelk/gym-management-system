@@ -4,7 +4,7 @@ include 'templates/header.php';
 <div id="admin-dashboard-page-identifier" class="d-none"></div>
 
 <div class="container">
-    <h2 class="text-center mb-4">Πίνακας Ελέγχou Διαχειριστή</h2>
+    <h2 class="text-center mb-4">Πίνακας Ελέγχoυ Διαχειριστή</h2>
     <div class="row">
 
         <div class="col-md-4 mb-3">
