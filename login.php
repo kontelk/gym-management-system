@@ -5,7 +5,7 @@ include 'templates/header.php';
 
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <h2 class="text-center mb-4">Είσοδος στο Σύστημα</h2>
+        <h2 class="text-center mb-4">Είσοδος</h2>
         
         <form id="login-form">
             <div class="mb-3">

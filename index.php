@@ -4,13 +4,13 @@ include 'templates/header.php';
 ?>
 
 <div class="jumbotron text-center">
-    <h1 class="display-4">Καλωσήρθατε στα Γυμναστήριό μας!</h1>
-    <!-- <p class="lead">Το σύγχρονο σύστημα διαχείρισης για τις κρατήσεις και τα μέλη του γυμναστηρίου σας.</p> -->
-    <p class="lead">Διαχειριστείτε εύκολα τις κρατήσεις σας και μείνετε ενημερωμένοι για τα νέα μας.</p>
+    <h1 class="display-4">Καλωσήρθατε στο Olympus Gym!</h1>
     <hr class="my-4">
+    &nbsp;
     <p>Δείτε τα διαθέσιμα προγράμματά μας ή κάντε εγγραφή για να ξεκινήσετε τις κρατήσεις σας.</p>
     <a class="btn btn-primary btn-lg" href="programs.php" role="button">Προβολή Προγραμμάτων</a>
     <a class="btn btn-success btn-lg guest-link" href="register.php" role="button">Κάνε Εγγραφή</a>
+    
 </div>
 
 <div class="container mt-5">

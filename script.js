@@ -1,6 +1,3 @@
-// Custom JavaScript functionality will go here
-console.log("JavaScript file loaded.");
-
 // Περιμένουμε να φορτωθεί πλήρως το HTML για να εκτελέσουμε τον κώδικα
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -9,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     
     // =================================================================
-    // 1. ΛΟΓΙΚΗ ΠΛΟΗΓΗΣΗΣ ΚΑΙ ΚΑΤΑΣΤΑΣΗΣ ΧΡΗΣΤΗ
+    // 1. ΛΟΓΙΚΗ ΓΙΑ ΤΟ NAVBAR ΚΑΙ ΤΗΝ ΑΠΟΣΥΝΔΕΣΗ
     // =================================================================
 
     // Συνάρτηση για την αποκωδικοποίηση του JWT payload
@@ -21,36 +18,78 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Συνάρτηση που ενημερώνει το Navbar ανάλογα με την κατάσταση σύνδεσης
+    // // Συνάρτηση που ενημερώνει το Navbar ανάλογα με την κατάσταση σύνδεσης
+    // function updateNavbar() {
+    //     const token = localStorage.getItem('jwt');
+    //     const guestLinks = document.querySelectorAll('.guest-link');
+    //     const userLinks = document.querySelectorAll('.user-link');
+    //     const adminLinks = document.querySelectorAll('.admin-link');
+    //     const authLinks = document.querySelectorAll('.auth-link'); // Logout button
+
+    //     if (token) {
+    //         const decodedToken = parseJwt(token);
+    //         if (decodedToken) {
+    //             // Ο χρήστης είναι συνδεδεμένος
+    //             guestLinks.forEach(link => link.classList.add('d-none'));
+    //             authLinks.forEach(link => link.classList.remove('d-none'));
+
+    //             // Έλεγχος ρόλου (1 = admin, 2 = registered_user)
+    //             if (decodedToken.data.role_id === 1) {
+    //                 adminLinks.forEach(link => link.classList.remove('d-none'));
+    //             } else if (decodedToken.data.role_id === 2) {
+    //                 userLinks.forEach(link => link.classList.remove('d-none'));
+    //             }
+    //         }
+    //     } else {
+    //         // Ο χρήστης είναι επισκέπτης
+    //         guestLinks.forEach(link => link.classList.remove('d-none'));
+    //         authLinks.forEach(link => link.classList.add('d-none'));
+    //         userLinks.forEach(link => link.classList.add('d-none'));
+    //         adminLinks.forEach(link => link.classList.add('d-none'));
+    //     }
+    // }
+
+    // Συνάρτηση που ενημερώνει το Navbar ανάλογα με την κατάσταση σύνδεσης (ΤΕΛΙΚΗ ΕΚΔΟΣΗ)
     function updateNavbar() {
         const token = localStorage.getItem('jwt');
+        // Selectors για τα links
         const guestLinks = document.querySelectorAll('.guest-link');
         const userLinks = document.querySelectorAll('.user-link');
         const adminLinks = document.querySelectorAll('.admin-link');
-        const authLinks = document.querySelectorAll('.auth-link'); // Logout button
+        // Πλέον το auth-link είναι ολόκληρο το dropdown menu του χρήστη
+        const authLinks = document.querySelectorAll('.auth-link'); 
+        
+        // Selector για την περιοχή εμφάνισης ονόματος μέσα στο dropdown
+        const usernameDisplayDropdown = document.getElementById('username-display-dropdown');
 
         if (token) {
             const decodedToken = parseJwt(token);
-            if (decodedToken) {
-                // Ο χρήστης είναι συνδεδεμένος
+            if (decodedToken && usernameDisplayDropdown) {
+                // --- Ο χρήστης είναι συνδεδεμένος ---
+                // Εμφάνιση του ονόματος χρήστη, χωρίς το "Καλώς ήρθες"
+                usernameDisplayDropdown.textContent = decodedToken.data.username;
+                
+                // Εμφάνιση/Απόκρυψη links
                 guestLinks.forEach(link => link.classList.add('d-none'));
                 authLinks.forEach(link => link.classList.remove('d-none'));
 
-                // Έλεγχος ρόλου (1 = admin, 2 = registered_user)
-                if (decodedToken.data.role_id === 1) {
+                // Έλεγχος ρόλου
+                if (decodedToken.data.role_id === 1) { // Admin
                     adminLinks.forEach(link => link.classList.remove('d-none'));
-                } else if (decodedToken.data.role_id === 2) {
+                } else if (decodedToken.data.role_id === 2) { // Registered User
                     userLinks.forEach(link => link.classList.remove('d-none'));
                 }
             }
         } else {
-            // Ο χρήστης είναι επισκέπτης
+            // --- Ο χρήστης είναι επισκέπτης ---
             guestLinks.forEach(link => link.classList.remove('d-none'));
             authLinks.forEach(link => link.classList.add('d-none'));
             userLinks.forEach(link => link.classList.add('d-none'));
             adminLinks.forEach(link => link.classList.add('d-none'));
         }
     }
+
+
 
     // Λειτουργία Αποσύνδεσης
     const logoutBtn = document.getElementById('logout-btn');
@@ -100,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.jwt) {
                     // Επιτυχής είσοδος
-                    messageArea.innerHTML = `<div class="alert alert-success">Η είσοδος ήταν επιτυχής. Ανακατεύθυνση...</div>`;
+                    messageArea.innerHTML = `<div class="alert alert-success">Η είσοδος ήταν επιτυχής.</div>`;
                     localStorage.setItem('jwt', data.jwt); // Αποθήκευση του token
 
                     // Ανακατεύθυνση ανάλογα με τον ρόλο
@@ -128,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // =================================================================
-    // 3. ΛΟΓΙΚΗ ΦΟΡΜΑΣ ΕΓΓΡΑΦΗΣ
+    // 3. ΛΟΓΙΚΗ ΦΟΡΜΑΣ ΕΓΓΡΑΦΗΣ ΧΡΗΣΤΗ
     // =================================================================
     
     const registerForm = document.getElementById('register-form');
@@ -292,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // =================================================================
-    // 4. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΠΡΟΓΡΑΜΜΑΤΩΝ
+    // 4. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΠΡΟΓΡΑΜΜΑΤΩΝ (PROGRAMS)
     // =================================================================
     const programsContainer = document.getElementById('programs-container');
 
@@ -337,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // =================================================================
-    // 5. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΚΡΑΤΗΣΗΣ (BOOKING)
+    // 5. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΚΡΑΤΗΣΗΣ ΠΡΟΓΡΑΜΜΑΤΟΣ (BOOKING)
     // =================================================================
     if (document.getElementById('booking-page-identifier')) {
         const token = localStorage.getItem('jwt');
