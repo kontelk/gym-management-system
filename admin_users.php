@@ -20,7 +20,11 @@ include 'templates/header.php';
         <div class="tab-pane fade" id="pending" role="tabpanel">
             <div class="table-responsive mt-3">
                 <table class="table table-striped">
-                    <thead><tr><th>Username</th><th>Όνομα</th><th>Email</th><th>Ημ/νία Αιτήματος</th><th>Ενέργεια</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Username</th><th>Ονοματεπώνυμο</th><th>Email</th><th>Ημ/νία Αιτήματος</th><th>Ενέργεια</th>
+                        </tr>
+                    </thead>
                     <tbody id="pending-users-tbody"></tbody>
                 </table>
             </div>
@@ -36,7 +40,11 @@ include 'templates/header.php';
 
             
             <table class="table table-striped">
-                <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Ρόλος</th><th>Κατάσταση</th><th>Ενέργειες</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Username</th><th>Ονοματεπώνυμο</th><th>Email</th><th>Ρόλος</th><th>Κατάσταση</th><th>Ενέργειες</th>
+                    </tr>
+                </thead>
                 <tbody id="all-users-tbody"></tbody>
             </table>
 

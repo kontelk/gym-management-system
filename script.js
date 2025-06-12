@@ -584,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             data.forEach(user => {
                                 const row = `<tr>
                                     <td>${user.username}</td>
-                                    <td>${user.first_name} ${user.last_name}</td>
+                                    <td>${user.last_name} ${user.first_name}</td>
                                     <td>${user.email}</td>
                                     <td>${new Date(user.request_date).toLocaleDateString('el-GR')}</td>
                                     <td><button class="btn btn-success btn-sm approve-btn" data-user-id="${user.id}">Έγκριση</button></td>
@@ -606,13 +606,33 @@ document.addEventListener('DOMContentLoaded', function() {
                              allUsersTbody.innerHTML = `<tr><td colspan="6" class="text-center">${data.message}</td></tr>`;
                         } else {
                             data.forEach(user => {
-                                const roleBadge = user.role_name ? `<span class="badge bg-info">${user.role_name}</span>` : '<span class="badge bg-secondary">guest</span>';
+                                const roleBadge = user.role_name ? `<span class="badge bg-info">${user.role_name}</span>` : '<span class="badge bg-secondary">unregistered_user</span>';
+                                // const statusBadge = user.status === 'active' ? '<span class="badge bg-success">Ενεργός</span>' : '<span class="badge bg-secondary">Ανενεργός</span>';
+                                let badgeClass;
+                                switch (user.status) {
+                                case 'active':
+                                    badgeClass = 'bg-success';
+                                    break;
+                                case 'inactive':
+                                    badgeClass = 'bg-secondary';
+                                    break;
+                                case 'rejected':
+                                    badgeClass = 'bg-danger';
+                                    break;
+                                case 'pending_approval':
+                                    badgeClass = 'bg-warning';
+                                    break;
+                                default:
+                                    badgeClass = 'bg-light text-dark'; // προεπιλογή
+                                }
+                                const statusBadge = `<span class="badge ${badgeClass}">${user.status}</span>`;
+
                                 const row = `<tr>
-                                    <td>${user.id}</td>
                                     <td>${user.username}</td>
+                                    <td>${user.last_name} ${user.first_name}</td>
                                     <td>${user.email}</td>
                                     <td>${roleBadge}</td>
-                                    <td>${user.status}</td>
+                                    <td>${statusBadge}</td>
                                     <td>
                                         <a href="#" class="edit-btn me-2" data-id="${user.id}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="18"></a>
                                         <a href="#" class="delete-btn" data-id="${user.id}" data-bs-toggle="tooltip" data-bs-title="Διαγραφή"><img src="icons/bin.png" alt="Διαγραφή" width="18"></a>
