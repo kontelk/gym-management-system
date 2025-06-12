@@ -11,7 +11,7 @@ include 'templates/header.php';
     <div id="message-area" class="mt-3"></div>
     <div class="table-responsive">
         <table class="table table-striped">
-            <thead><tr><th>ID</th><th>Όνομα</th><th>Τύπος</th><th>Κατάσταση</th><th>Ενέργειες</th></tr></thead>
+            <thead><tr><th>Όνομα</th><th>Τύπος</th><th>Κατάσταση</th><th>Ενέργειες</th></tr></thead>
             <tbody id="programs-tbody"></tbody>
         </table>
     </div>
@@ -28,15 +28,15 @@ include 'templates/header.php';
                 <form id="program-form">
                     <input type="hidden" id="program-id">
                     <div class="mb-3">
-                        <label for="program-name" class="form-label">Όνομα</label>
+                        <label for="program-name" class="form-label">Όνομα (*)</label>
                         <input type="text" class="form-control" id="program-name" required>
                     </div>
                     <div class="mb-3">
-                        <label for="program-description" class="form-label">Περιγραφή</label>
+                        <label for="program-description" class="form-label">Περιγραφή (*)</label>
                         <textarea class="form-control" id="program-description" rows="3"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="program-type" class="form-label">Τύπος</label>
+                        <label for="program-type" class="form-label">Τύπος (*)</label>
                         <select class="form-select" id="program-type" required>
                             <option value="individual">Ατομικό</option>
                             <option value="group">Ομαδικό</option>

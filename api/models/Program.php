@@ -48,21 +48,45 @@ class Program {
     }
 
 
+    // /**
+    //  * Διαβάζει τις πληροφορίες ενός μόνο προγράμματος με βάση το ID.
+    //  */
+    // public function readOne() {
+    //     $query = "SELECT id, name, description, type FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
+    //     $stmt = $this->conn->prepare($query);
+    //     $stmt->bindParam(':id', $this->id);
+    //     $stmt->execute();
+    //     $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    //     if ($row) {
+    //         $this->name = $row['name'];
+    //         $this->description = $row['description'];
+    //         $this->type = $row['type'];
+    //     }
+    // }
+
+
     /**
      * Διαβάζει τις πληροφορίες ενός μόνο προγράμματος με βάση το ID.
      */
     public function readOne() {
-        $query = "SELECT id, name, description, type FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
+        // Προσθέτουμε το πεδίο is_active στο SELECT
+        $query = "SELECT id, name, description, type, is_active FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
+        
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $this->id);
         $stmt->execute();
+        
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        
         if ($row) {
             $this->name = $row['name'];
             $this->description = $row['description'];
             $this->type = $row['type'];
+            $this->is_active = $row['is_active'];
         }
     }
+
+
 
 
     // ... (υπάρχουσες μέθοδοι readAllActive, readOne)
@@ -104,9 +128,8 @@ class Program {
         $this->is_active = htmlspecialchars(strip_tags($this->is_active));
         $this->id = htmlspecialchars(strip_tags($this->id));
 
-        // Για το is_active, μετατρέπουμε την τιμή σε TRUE ή FALSE για τη βάση δεδομένων
-        // Αν η τιμή είναι '1', τότε είναι TRUE, αλλιώς FALSE.
-        $is_active_value = ($this->is_active == '1') ? 'TRUE' : 'FALSE';
+        // Ελέγχουμε αν το is_active είναι '1' ή '' και το μετατρέπουμε σε '1' ή '0'
+        $is_active_value = ($this->is_active == '1') ? '1' : '0';
 
         $stmt->bindParam(':name', $this->name);
         $stmt->bindParam(':description', $this->description);
@@ -138,7 +161,7 @@ class Program {
      * @return PDOStatement
      */
     public function readAllForAdmin() {
-        $query = "SELECT id, name, description, type, is_active FROM " . $this->table_name . " ORDER BY name ASC";
+        $query = "SELECT id, name, description, type, is_active FROM " . $this->table_name . " ORDER BY id";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;

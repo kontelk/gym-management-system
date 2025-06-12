@@ -18,11 +18,24 @@ $program = new Program($db);
 $program->id = $program_id;
 $program->readOne();
 
+// if ($program->name != null) {
+//     $program_arr = ["id" => $program->id, "name" => $program->name, "description" => $program->description, "type" => $program->type];
+//     http_response_code(200);
+//     echo json_encode($program_arr, JSON_UNESCAPED_UNICODE);
+// } else {
+
 if ($program->name != null) {
-    $program_arr = ["id" => $program->id, "name" => $program->name, "description" => $program->description, "type" => $program->type];
+    // Προσθέτουμε το is_active στον πίνακα που επιστρέφουμε
+    $program_arr = [
+        "id" => $program->id,
+        "name" => $program->name,
+        "description" => $program->description,
+        "type" => $program->type,
+        "is_active" => $program->is_active
+    ];
     http_response_code(200);
     echo json_encode($program_arr, JSON_UNESCAPED_UNICODE);
-} else {
+} else {    
     http_response_code(404);
     echo json_encode(["message" => "Το πρόγραμμα δεν βρέθηκε."]);
 }

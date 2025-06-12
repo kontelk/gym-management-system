@@ -768,11 +768,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     programsTbody.innerHTML = '';
                     data.forEach(p => {
-                        const statusBadge = p.is_active ? '<span class="badge bg-success">Ενεργό</span>' : '<span class="badge bg-secondary">Ανενεργό</span>';
+                        const programName = p.is_active ? `${p.name}` : `<span class="text-muted" style="opacity: 0.5"><em>${p.name}</em></span>`;
+                        const statusBadge = p.is_active ? 'Ενεργό' : '<span class="badge bg-secondary" style="opacity: 0.5"><em>Ανενεργό</em></span>';
+                        const programType = p.type === 'group' ? '<span class="badge bg-danger">Ομαδικό</span>' : '<span class="badge bg-success">Ατομικό</span>';
+                        const progranTypeFormatted = p.is_active ? programType : `<span class="text-muted" style="opacity: 0.5"><em>${programType}</em></span>`;
                         const row = `<tr>
-                            <td>${p.id}</td>
-                            <td>${p.name}</td>
-                            <td>${p.type === 'group' ? 'Ομαδικό' : 'Ατομικό'}</td>
+                            
+                            <td>${programName}</td>
+                            <td>${progranTypeFormatted}</td>
                             <td>${statusBadge}</td>
                             <td>
                                 
