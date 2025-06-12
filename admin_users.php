@@ -9,15 +9,15 @@ include 'templates/header.php';
 
     <ul class="nav nav-tabs" id="userTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">Αιτήματα σε Αναμονή <span id="pending-count" class="badge bg-danger ms-1"></span></button>
+            <button class="nav-link active" id="all-users-tab" data-bs-toggle="tab" data-bs-target="#all-users" type="button" role="tab">Όλοι οι Χρήστες</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="all-users-tab" data-bs-toggle="tab" data-bs-target="#all-users" type="button" role="tab">Όλοι οι Χρήστες</button>
+            <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">Αιτήματα σε Αναμονή <span id="pending-count" class="badge bg-danger ms-1"></span></button>
         </li>
     </ul>
 
     <div class="tab-content" id="userTabsContent">
-        <div class="tab-pane fade show active" id="pending" role="tabpanel">
+        <div class="tab-pane fade" id="pending" role="tabpanel">
             <div class="table-responsive mt-3">
                 <table class="table table-striped">
                     <thead><tr><th>Username</th><th>Όνομα</th><th>Email</th><th>Ημ/νία Αιτήματος</th><th>Ενέργεια</th></tr></thead>
@@ -25,7 +25,7 @@ include 'templates/header.php';
                 </table>
             </div>
         </div>
-        <div class="tab-pane fade" id="all-users" role="tabpanel">
+        <div class="tab-pane fade show active" id="all-users" role="tabpanel">
 
              <!-- <div class="table-responsive mt-3">
                 <table class="table table-striped">

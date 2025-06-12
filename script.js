@@ -548,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // =================================================================
-    // 7. ΛΟΓΙΚΗ ΣΕΛΙΔΩΝ ΔΙΑΧΕΙΡΙΣΤΗ (ADMIN)
+    // 7. ΛΟΓΙΚΗ ΣΕΛΙΔΩΝ ΔΙΑΧΕΙΡΙΡΙΣΗΣ ΧΡΗΣΤΩΝ (ADMIN)
     // =================================================================
     if (document.getElementById('admin-users-page-identifier') || document.getElementById('admin-dashboard-page-identifier')) {
         const token = localStorage.getItem('jwt');
@@ -606,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
                              allUsersTbody.innerHTML = `<tr><td colspan="6" class="text-center">${data.message}</td></tr>`;
                         } else {
                             data.forEach(user => {
-                                const roleBadge = user.role_name ? `<span class="badge bg-info">${user.role_name}</span>` : '<span class="badge bg-secondary">Κανένας</span>';
+                                const roleBadge = user.role_name ? `<span class="badge bg-info">${user.role_name}</span>` : '<span class="badge bg-secondary">guest</span>';
                                 const row = `<tr>
                                     <td>${user.id}</td>
                                     <td>${user.username}</td>
