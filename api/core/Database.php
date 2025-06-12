@@ -16,7 +16,7 @@ class Database {
      */
     private function __construct() {
         // Συμπεριλαμβάνουμε το αρχείο ρυθμίσεων.
-        require_once __DIR__ . '/../config/database.php';
+        require_once __DIR__ . '/../config/app_config.php';
 
         // DSN (Data Source Name) string για τη σύνδεση.
         $dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=utf8mb4';
