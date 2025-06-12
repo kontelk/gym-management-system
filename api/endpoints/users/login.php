@@ -9,7 +9,7 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 // Συμπερίληψη αρχείων
 include_once __DIR__ . '/../../core/Database.php';
 include_once __DIR__ . '/../../models/User.php';
-include_once __DIR__ . '/../../config/database.php'; // Περιέχει τις JWT ρυθμίσεις
+include_once __DIR__ . '/../../config/app_config.php'; // Περιέχει τις JWT ρυθμίσεις
 // Συμπερίληψη του autoloader του Composer
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
