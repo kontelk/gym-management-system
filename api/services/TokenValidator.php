@@ -18,7 +18,7 @@ class TokenValidator {
      */
     public static function validate() {
         // Συμπερίληψη των ρυθμίσεων για το JWT
-        include_once __DIR__ . '/../config/database.php';
+        include_once __DIR__ . '/../config/app_config.php';
 
         // Λήψη του JWT από το Authorization header
         $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';

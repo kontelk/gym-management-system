@@ -16,9 +16,8 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container-fluid">
     <a class="navbar-brand" href="index.php">
-        <img src="icons/logo.png" alt="Olympus Gym Logo" height="35">&nbsp;<strong>Olympus Gym</strong>
+      <img src="icons/olympus.png" alt="Olympus Gym Logo" height="35">&nbsp;<strong>Olympus Gym</strong>
     </a>
-    
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -45,6 +44,13 @@
             <li><a class="dropdown-item" id="logout-btn" href="#">Αποσύνδεση</a></li>
             </ul>
         </li>
+
+        <li class="nav-item auth-link d-none ms-3">
+            <div id="jwt-timer" data-bs-toggle="tooltip" data-bs-title="Ανανέωση Χρόνου Συνεδρίας">
+                <div id="jwt-timer-text"></div>
+            </div>
+        </li>
+        
       </ul>
     </div>
   </div>
