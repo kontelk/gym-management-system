@@ -331,6 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if(initialToken) {
         startJwtTimer(initialToken);
     }
+    
 
 
     // =================================================================
@@ -494,6 +495,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         });
     }
+
 
 
     // =================================================================
@@ -976,6 +978,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+
     // =================================================================
     // 8. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΠΡΟΓΡΑΜΜΑΤΩΝ (ADMIN)
     // =================================================================
@@ -1103,6 +1106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Αρχική φόρτωση
         fetchAdminPrograms();
     }
+
 
 
     // =================================================================
@@ -1598,35 +1602,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 trainerModal.hide();
                 fetchTrainers();
             });
-        });
-        
+        });   
         fetchTrainers();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
 
 });
