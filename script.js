@@ -1516,16 +1516,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function fetchTrainers() {
             // Χρησιμοποιούμε το δημόσιο endpoint που φέρνει όλους τους γυμναστές
-            fetch(`${apiBaseUrl}/trainers/read.php`)
-                .then(res => res.json())
+            apiFetch(`${apiBaseUrl}/trainers/read.php`)
                 .then(data => {
                     trainersTbody.innerHTML = '';
-                    if (data.length === 0) {
+                    // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
+                    // ή αν είναι ένας κενός πίνακας.
+                    if (data && data.message && !Array.isArray(data)) {
+                        trainersTbody.innerHTML = `<tr><td colspan="4" class="text-center">${data.message}</td></tr>`;
+                    } else if (Array.isArray(data) && data.length === 0) {
                         trainersTbody.innerHTML = `<tr><td colspan="4" class="text-center">Δεν βρέθηκαν γυμναστές.</td></tr>`;
-                    } else {
+                    } else if (Array.isArray(data)) {
                         data.forEach(t => {
                             const row = `<tr>
-                                
                                 <td>${t.last_name}</td>
                                 <td>${t.first_name}</td>
                                 <td>
@@ -1536,9 +1538,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             trainersTbody.innerHTML += row;
                         });
                         // Αρχικοποίηση των tooltips
-                        const tooltipTriggerList = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')];
+                        const tooltipTriggerList = [...trainersTbody.querySelectorAll('[data-bs-toggle="tooltip"]')];
                         tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+                    } else {
+                        // Για απρόσμενη μορφή δεδομένων
+                        trainersTbody.innerHTML = `<tr><td colspan="4" class="text-center text-warning">Μη αναμενόμενη απάντηση από τον server.</td></tr>`;
+                        console.error("Unexpected data format for trainers:", data);
                     }
+                })
+                .catch(error => {
+                    console.error('Error fetching trainers:', error);
+                    trainersTbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Σφάλμα φόρτωσης γυμναστών: ${error.message || 'Προέκυψε σφάλμα'}</td></tr>`;
                 });
         }
         
@@ -1558,26 +1568,37 @@ document.addEventListener('DOMContentLoaded', function() {
             if (targetLink.classList.contains('edit-trainer-btn')) {
                 e.preventDefault();
                 // Φόρτωση δεδομένων για επεξεργασία
-                fetch(`${apiBaseUrl}/trainers/read_one.php?id=${id}`, { headers: { 'Authorization': `Bearer ${token}` } })
-                    .then(res => res.json())
+                apiFetch(`${apiBaseUrl}/trainers/read_one.php?id=${id}`)
                     .then(t => {
-                        document.getElementById('trainer-id').value = t.id;
-                        document.getElementById('trainer-first-name').value = t.first_name;
-                        document.getElementById('trainer-last-name').value = t.last_name;
-                        document.getElementById('trainer-bio').value = t.bio;
-                        document.getElementById('modal-title').textContent = 'Επεξεργασία Γυμναστή';
-                        trainerModal.show();
+                        if (t && t.id) {
+                            document.getElementById('trainer-id').value = t.id;
+                            document.getElementById('trainer-first-name').value = t.first_name;
+                            document.getElementById('trainer-last-name').value = t.last_name;
+                            document.getElementById('trainer-bio').value = t.bio;
+                            document.getElementById('modal-title').textContent = 'Επεξεργασία Γυμναστή';
+                            trainerModal.show();
+                        } else {
+                            messageArea.innerHTML = `<div class="alert alert-warning">${t.message || 'Δεν βρέθηκε ο γυμναστής ή τα δεδομένα είναι ελλιπή.'}</div>`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching trainer details:', error);
+                        messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα φόρτωσης λεπτομερειών: ${error.message || 'Άγνωστο σφάλμα.'}</div>`;
                     });
             } else if (targetLink.classList.contains('delete-trainer-btn')) {
                 e.preventDefault();
                 if(confirm('Είστε σίγουροι; Η διαγραφή ενός γυμναστή θα τον αφαιρέσει από τα events που έχει αναλάβει.')){
-                    fetch(`${apiBaseUrl}/trainers/delete.php`, {
+                    apiFetch(`${apiBaseUrl}/trainers/delete.php`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                         body: JSON.stringify({ id: id })
-                    }).then(res => res.json()).then(data => {
-                        messageArea.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                    })
+                    .then(data => {
+                        messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Ο γυμναστής διαγράφηκε επιτυχώς.'}</div>`;
                         fetchTrainers();
+                    })
+                    .catch(error => {
+                        console.error('Error deleting trainer:', error);
+                        messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα διαγραφής: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
                     });
                 }
             }
@@ -1593,16 +1614,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 last_name: document.getElementById('trainer-last-name').value,
                 bio: document.getElementById('trainer-bio').value
             };
-            fetch(url, {
+            apiFetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(formData)
-            }).then(res => res.json()).then(data => {
-                messageArea.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+            })
+            .then(data => {
+                messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Τα στοιχεία αποθηκεύτηκαν επιτυχώς.'}</div>`;
                 trainerModal.hide();
                 fetchTrainers();
+            })
+            .catch(error => {
+                console.error('Error saving trainer:', error);
+                messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα αποθήκευσης: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
             });
-        });   
+        });
         fetchTrainers();
     }
 
