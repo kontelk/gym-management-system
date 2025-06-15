@@ -3,7 +3,76 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const apiBaseUrl = '/api/endpoints'; // Βασικό URL του API μας
 
+
+
     
+    ////////////////////////////////////////////////////////////////////
+    // --- (Α) ΒΟΗΘΗΤΙΚΕΣ ΣΥΝΑΡΤΗΣΕΙΣ ΓΙΑ ΓΕΝΙΚΗ ΧΡΗΣΗ ---
+    //////////////////////////////////////////////////////////////////// 
+
+
+
+    // =================================================================
+    // ΚΕΝΤΡΙΚΟΣ ΧΕΙΡΙΣΤΗΣ API REQUESTS (FETCH WRAPPER)
+    // =================================================================
+    
+    async function apiFetch(url, options = {}) {
+        const token = localStorage.getItem('jwt');
+
+        // Προετοιμασία των headers
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers, // Συμπεριλαμβάνουμε τυχόν custom headers
+        };
+
+        // Αυτόματη προσθήκη του Authorization header αν υπάρχει token
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // Ενημέρωση των options με τα νέα headers
+        const newOptions = { ...options, headers };
+
+        try {
+            const response = await fetch(url, newOptions);
+
+            // ΚΕΝΤΡΙΚΟΣ ΕΛΕΓΧΟΣ ΓΙΑ TIMEOUT/UNAUTHORIZED
+            if (response.status === 401) {
+                // Το token είναι άκυρο ή έχει λήξει
+                localStorage.removeItem('jwt'); // Καθαρισμός του άκυρου token
+                alert('Η συνεδρία σας έχει λήξει. Παρακαλώ συνδεθείτε ξανά.');
+                window.location.href = 'login.php'; // Ανακατεύθυνση στη σελίδα εισόδου
+                // "Παγώνουμε" την εκτέλεση για να μην συνεχίσει ο υπόλοιπος κώδικας
+                return Promise.reject(new Error('Unauthorized')); 
+            }
+
+            if (!response.ok) {
+                // Χειρισμός άλλων HTTP σφαλμάτων (π.χ. 404, 500)
+                const errorData = await response.json().catch(() => ({ message: 'Άγνωστο σφάλμα server.' }));
+                return Promise.reject(errorData);
+            }
+            
+            // Για 204 No Content (π.χ. σε επιτυχημένη διαγραφή χωρίς σώμα απάντησης)
+            if (response.status === 204) {
+                return Promise.resolve();
+            }
+
+            return response.json(); // Επιστροφή των δεδομένων JSON
+
+        } catch (error) {
+            console.error('Fetch Error:', error);
+            return Promise.reject(error);
+        }
+    }
+
+
+
+    ////////////////////////////////////////////////////////////////////
+    // --- (Β) ΛΕΙΤΟΥΡΓΙΚΟΤΗΤΑ ΤΩΝ ΣΕΛΙΔΩΝ ---
+    ////////////////////////////////////////////////////////////////////
+    
+
+
     
     // =================================================================
     // 1. ΛΟΓΙΚΗ ΓΙΑ ΤΟ NAVBAR ΚΑΙ ΤΗΝ ΑΠΟΣΥΝΔΕΣΗ
@@ -17,37 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
     }
-
-    // // Συνάρτηση που ενημερώνει το Navbar ανάλογα με την κατάσταση σύνδεσης
-    // function updateNavbar() {
-    //     const token = localStorage.getItem('jwt');
-    //     const guestLinks = document.querySelectorAll('.guest-link');
-    //     const userLinks = document.querySelectorAll('.user-link');
-    //     const adminLinks = document.querySelectorAll('.admin-link');
-    //     const authLinks = document.querySelectorAll('.auth-link'); // Logout button
-
-    //     if (token) {
-    //         const decodedToken = parseJwt(token);
-    //         if (decodedToken) {
-    //             // Ο χρήστης είναι συνδεδεμένος
-    //             guestLinks.forEach(link => link.classList.add('d-none'));
-    //             authLinks.forEach(link => link.classList.remove('d-none'));
-
-    //             // Έλεγχος ρόλου (1 = admin, 2 = registered_user)
-    //             if (decodedToken.data.role_id === 1) {
-    //                 adminLinks.forEach(link => link.classList.remove('d-none'));
-    //             } else if (decodedToken.data.role_id === 2) {
-    //                 userLinks.forEach(link => link.classList.remove('d-none'));
-    //             }
-    //         }
-    //     } else {
-    //         // Ο χρήστης είναι επισκέπτης
-    //         guestLinks.forEach(link => link.classList.remove('d-none'));
-    //         authLinks.forEach(link => link.classList.add('d-none'));
-    //         userLinks.forEach(link => link.classList.add('d-none'));
-    //         adminLinks.forEach(link => link.classList.add('d-none'));
-    //     }
-    // }
 
     // Συνάρτηση που ενημερώνει το Navbar ανάλογα με την κατάσταση σύνδεσης (ΤΕΛΙΚΗ ΕΚΔΟΣΗ)
     function updateNavbar() {
@@ -88,8 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
             adminLinks.forEach(link => link.classList.add('d-none'));
         }
     }
-
-
 
     // Λειτουργία Αποσύνδεσης
     const logoutBtn = document.getElementById('logout-btn');
@@ -164,6 +200,137 @@ document.addEventListener('DOMContentLoaded', function() {
     //     });
     // }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // =================================================================
+    // 2. ΛΟΓΙΚΗ ΦΟΡΜΑΣ ΕΙΣΟΔΟΥ ΚΑΙ ΧΡΟΝΟΜΕΤΡΟΥ ΛΗΞΗΣ JWT
+    // =================================================================
+
+    let jwtTimerInterval; // Μεταβλητή που θα κρατάει το ID του interval
+
+    // Συνάρτηση που ξεκινά ή επανεκκινεί το χρονόμετρο
+    function startJwtTimer(token) {
+        // Καθαρίζουμε τυχόν προηγούμενο timer
+        clearInterval(jwtTimerInterval);
+
+        const decodedToken = parseJwt(token);
+        if (!decodedToken || !decodedToken.exp) return;
+
+        const timerElement = document.getElementById('jwt-timer');
+        const timerText = document.getElementById('jwt-timer-text');
+        if (!timerElement || !timerText) return;
+
+        // Εμφανίζουμε το timer μόνο για συνδεδεμένους χρήστες
+        timerElement.parentElement.classList.remove('d-none');
+        
+        // Η ώρα λήξης του token σε milliseconds
+        const tokenExpMs = decodedToken.exp * 1000;
+
+        const updateTimerDisplay = () => {
+            const remainingMs = tokenExpMs - Date.now();
+            if (remainingMs <= 0) {
+                clearInterval(jwtTimerInterval);
+                localStorage.removeItem('jwt');
+                alert('Η σύνδεσή σας έληξε. Παρακαλώ συνδεθείτε ξανά.');
+                window.location.href = 'login.php';
+                return;
+            }
+            const remainingSeconds = Math.round(remainingMs / 1000);
+            const minutes = Math.floor(remainingSeconds / 60);
+            // Ελέγχουμε αν τα λεπτά είναι μονοψήφια και προσθέτουμε μηδέν μπροστά
+            const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+            
+            // Εμφάνιση λεπτών και δευτερολέπτων
+            const seconds = remainingSeconds % 60;
+            const formattedSeconds = seconds < 10 ? `0${seconds}` : seconds;
+            timerText.textContent = `${formattedMinutes}:${formattedSeconds}`;
+
+            // Ενημέρωση του κυκλικού progress bar
+            const totalDuration = decodedToken.exp - decodedToken.iat;
+            const elapsed = totalDuration - remainingSeconds;
+            const percentage = Math.round((elapsed / totalDuration) * 100);
+            
+            // Το conic-gradient λειτουργεί αντίστροφα, οπότε αφαιρούμε από 100
+            timerElement.style.setProperty('--p', 100 - percentage);
+        };
+        
+        updateTimerDisplay(); // Αρχική εμφάνιση
+        jwtTimerInterval = setInterval(updateTimerDisplay, 1000); // Ενημέρωση κάθε 1 δευτερόλεπτο
+    }
+
+    // Event listener για την ανανέωση του token
+    document.getElementById('jwt-timer')?.addEventListener('click', () => {
+        // if (!confirm('Θέλετε να ανανεώσετε τον χρόνο της συνδεσής σας;')) return;
+        apiFetch(`${apiBaseUrl}/users/refresh_token.php`)
+            .then(data => {
+                if (data.jwt) {
+                    localStorage.setItem('jwt', data.jwt); // Αποθήκευση του νέου token
+                    startJwtTimer(data.jwt); // Επανεκκίνηση του timer με το νέο token
+                }
+            })
+            .catch(error => console.error('Token refresh failed:', error));
+    });
+
+    // --- Τροποποίηση της Λογικής του Login ---
+    // Μέσα στο event listener του loginForm, στο σημείο της επιτυχίας:
+    if (document.getElementById('login-form')) {
+        const loginForm = document.getElementById('login-form');
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            // ... (κώδικας για συλλογή username/password)
+
+            const username = document.getElementById('username').value;
+            console.log(username);
+            const password = document.getElementById('password').value;
+            console.log(password);
+
+            // Δεδομένα που θα στείλουμε στο API
+            const loginData = {
+                username: username,
+                password: password
+            };
+
+            // Κλήση στο API για login
+            apiFetch(`${apiBaseUrl}/users/login.php`, {
+                method: 'POST',
+                body: JSON.stringify({username: e.target.username.value, password: e.target.password.value})
+            })
+            .then(data => {
+                if (data.jwt) {
+                    localStorage.setItem('jwt', data.jwt);
+                    startJwtTimer(data.jwt); // **ΝΕΟ: ΚΑΛΕΣΜΑ ΤΟΥ TIMER ΜΕΤΑ ΤΟ LOGIN**
+                    updateNavbar(); // Ενημέρωση του navbar
+                    
+                    const decodedToken = parseJwt(data.jwt);
+                    setTimeout(() => {
+                        window.location.href = (decodedToken.data.role_id === 1) ? 'admin_dashboard.php' : 'index.php';
+                    }, 500);
+                }
+            })
+            .catch(error => {
+                const messageArea = document.getElementById('message-area');
+                messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
+            });
+        });
+    }
+
+    // --- Έλεγχος κατά τη φόρτωση της σελίδας ---
+    // Αυτό διασφαλίζει ότι το timer ξεκινά όταν ανανεώνουμε μια σελίδα ή πλοηγούμαστε
+    const initialToken = localStorage.getItem('jwt');
+    if(initialToken) {
+        startJwtTimer(initialToken);
+    }
 
 
     // =================================================================
@@ -327,7 +494,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         });
     }
-
 
 
     // =================================================================
@@ -507,13 +673,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const bookingsContainer = document.getElementById('my-bookings-container');
         const messageArea = document.getElementById('message-area');
 
+        // --- Προστασία Σελίδας ---
+        // Ελέγχουμε αν ο χρήστης είναι συνδεδεμένος και έχει ρόλο χρήστη
         function fetchMyBookings() {
-            bookingsContainer.innerHTML = '<tr><td colspan="4" class="text-center">Φόρτωση κρατήσεων...</td></tr>';
+            bookingsContainer.innerHTML = '<tr><td colspan="4" class="text-center text-success">Φόρτωση κρατήσεων...</td></tr>';
 
-            fetch(`${apiBaseUrl}/bookings/read_by_user.php`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(res => res.json())
+            apiFetch(`${apiBaseUrl}/bookings/read_by_user.php`)//, {
+            //     headers: { 'Authorization': `Bearer ${token}` }
+            // })
+            //.then(res => res.json())
             .then(data => {
                 bookingsContainer.innerHTML = '';
                 if (data.message) {
@@ -549,6 +717,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                     bookingsContainer.innerHTML += row;
                 });
+            })
+            .catch(err => {
+                console.error('Error fetching bookings:', err);
+                bookingsContainer.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Σφάλμα φόρτωσης κρατήσεων.</td></tr>';
             });
         }
         
@@ -634,7 +806,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             }
 
-
             // --- Φόρτωση όλων των χρηστών (ΕΝΗΜΕΡΩΜΕΝΗ) ---
             function fetchAllUsers() {
                  fetch(`${apiBaseUrl}/users/read.php`, { headers: { 'Authorization': `Bearer ${token}` } })
@@ -686,8 +857,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             }
 
-
-
             // Event Listeners για επεξεργασία και διαγραφή χρηστών
             allUsersTbody.addEventListener('click', e => {
                 const targetLink = e.target.closest('a');
@@ -729,9 +898,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-
-
-
             // Συνάρτηση για έγκριση χρήστη
             function approveUser(userId) {
                 fetch(`${apiBaseUrl}/users/approve.php`, {
@@ -770,10 +936,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             });
-
             
-            
-            
+            // Άνοιγμα modal για νέο χρήστη
             userForm.addEventListener('submit', e => {
                 e.preventDefault();
                 const formData = {
@@ -790,6 +954,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     password: document.getElementById('user-password').value // Θα είναι κενό αν δεν αλλάζει ο κωδικός
                 };
 
+                // Ελέγχουμε αν το ID υπάρχει για να αποφασίσουμε αν είναι ενημέρωση ή δημιουργία
                 fetch(`${apiBaseUrl}/users/update.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -809,12 +974,6 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchAllUsers();
         }
     }
-
-
-
-
-
-
 
 
     // =================================================================
@@ -944,7 +1103,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Αρχική φόρτωση
         fetchAdminPrograms();
     }
-
 
 
     // =================================================================
@@ -1448,93 +1606,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    // =================================================================
-    // ΛΟΓΙΚΗ ΧΡΟΝΟΜΕΤΡΟΥ ΛΗΞΗΣ JWT
-    // =================================================================
-
-    let jwtTimerInterval; // Μεταβλητή που θα κρατάει το ID του interval
-
-    // Συνάρτηση που ξεκινά ή επανεκκινεί το χρονόμετρο
-    function startJwtTimer(token) {
-        // Καθαρίζουμε τυχόν προηγούμενο timer
-        clearInterval(jwtTimerInterval);
-
-        const decodedToken = parseJwt(token);
-        if (!decodedToken || !decodedToken.exp) return;
-
-        const timerElement = document.getElementById('jwt-timer');
-        const timerText = document.getElementById('jwt-timer-text');
-        if (!timerElement || !timerText) return;
-
-        // Εμφανίζουμε το timer μόνο για συνδεδεμένους χρήστες
-        timerElement.parentElement.classList.remove('d-none');
-        
-        // Η ώρα λήξης του token σε milliseconds
-        const tokenExpMs = decodedToken.exp * 1000;
-
-        const updateTimerDisplay = () => {
-            const remainingMs = tokenExpMs - Date.now();
-            if (remainingMs <= 0) {
-                clearInterval(jwtTimerInterval);
-                localStorage.removeItem('jwt');
-                alert('Η σύνδεσή σας έληξε. Παρακαλώ συνδεθείτε ξανά.');
-                window.location.href = 'login.php';
-                return;
-            }
-            const remainingSeconds = Math.round(remainingMs / 1000);
-            const minutes = Math.floor(remainingSeconds / 60);
-            // Ελέγχουμε αν τα λεπτά είναι μονοψήφια και προσθέτουμε μηδέν μπροστά
-            const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-            
-            // Εμφάνιση λεπτών και δευτερολέπτων
-            const seconds = remainingSeconds % 60;
-            const formattedSeconds = seconds < 10 ? `0${seconds}` : seconds;
-            timerText.textContent = `${formattedMinutes}:${formattedSeconds}`;
-
-            // Ενημέρωση του κυκλικού progress bar
-            const totalDuration = decodedToken.exp - decodedToken.iat;
-            const elapsed = totalDuration - remainingSeconds;
-            const percentage = Math.round((elapsed / totalDuration) * 100);
-            
-            // Το conic-gradient λειτουργεί αντίστροφα, οπότε αφαιρούμε από 100
-            timerElement.style.setProperty('--p', 100 - percentage);
-        };
-        
-        updateTimerDisplay(); // Αρχική εμφάνιση
-        jwtTimerInterval = setInterval(updateTimerDisplay, 1000); // Ενημέρωση κάθε 1 δευτερόλεπτο
-    }
-
-    // Event listener για την ανανέωση του token
-    document.getElementById('jwt-timer')?.addEventListener('click', () => {
-        // if (!confirm('Θέλετε να ανανεώσετε τον χρόνο της συνδεσής σας;')) return;
-        apiFetch(`${apiBaseUrl}/users/refresh_token.php`)
-            .then(data => {
-                if (data.jwt) {
-                    localStorage.setItem('jwt', data.jwt); // Αποθήκευση του νέου token
-                    startJwtTimer(data.jwt); // Επανεκκίνηση του timer με το νέο token
-                }
-            })
-            .catch(error => console.error('Token refresh failed:', error));
-    });
-
-    // --- Τροποποίηση της Λογικής του Login ---
-    // Μέσα στο event listener του loginForm, στο σημείο της επιτυχίας:
-    if (document.getElementById('login-form')) {
-        const loginForm = document.getElementById('login-form');
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            // ... (κώδικας για συλλογή username/password)
-
-            const username = document.getElementById('username').value;
-            console.log(username);
-            const password = document.getElementById('password').value;
-            console.log(password);
-
-            // Δεδομένα που θα στείλουμε στο API
-            const loginData = {
-                username: username,
-                password: password
-            };
 
 
 
@@ -1542,91 +1613,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-            apiFetch(`${apiBaseUrl}/users/login.php`, {
-                method: 'POST',
-                body: JSON.stringify({username: e.target.username.value, password: e.target.password.value})
-            })
-            .then(data => {
-                if (data.jwt) {
-                    localStorage.setItem('jwt', data.jwt);
-                    startJwtTimer(data.jwt); // **ΝΕΟ: ΚΑΛΕΣΜΑ ΤΟΥ TIMER ΜΕΤΑ ΤΟ LOGIN**
-                    updateNavbar(); // Ενημέρωση του navbar
-                    
-                    const decodedToken = parseJwt(data.jwt);
-                    setTimeout(() => {
-                        window.location.href = (decodedToken.data.role_id === 1) ? 'admin_dashboard.php' : 'index.php';
-                    }, 500);
-                }
-            })
-            .catch(error => {
-                const messageArea = document.getElementById('message-area');
-                messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
-            });
-        });
-    }
-
-    // --- Έλεγχος κατά τη φόρτωση της σελίδας ---
-    // Αυτό διασφαλίζει ότι το timer ξεκινά όταν ανανεώνουμε μια σελίδα ή πλοηγούμαστε
-    const initialToken = localStorage.getItem('jwt');
-    if(initialToken) {
-        startJwtTimer(initialToken);
-    }
 
 
 
 
-    // =================================================================
-    // ΚΕΝΤΡΙΚΟΣ ΧΕΙΡΙΣΤΗΣ API REQUESTS (FETCH WRAPPER)
-    // =================================================================
+
+
+
+
+
+
     
-    async function apiFetch(url, options = {}) {
-        const token = localStorage.getItem('jwt');
-
-        // Προετοιμασία των headers
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers, // Συμπεριλαμβάνουμε τυχόν custom headers
-        };
-
-        // Αυτόματη προσθήκη του Authorization header αν υπάρχει token
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        // Ενημέρωση των options με τα νέα headers
-        const newOptions = { ...options, headers };
-
-        try {
-            const response = await fetch(url, newOptions);
-
-            // ΚΕΝΤΡΙΚΟΣ ΕΛΕΓΧΟΣ ΓΙΑ TIMEOUT/UNAUTHORIZED
-            if (response.status === 401) {
-                // Το token είναι άκυρο ή έχει λήξει
-                localStorage.removeItem('jwt'); // Καθαρισμός του άκυρου token
-                alert('Η συνεδρία σας έχει λήξει. Παρακαλώ συνδεθείτε ξανά.');
-                window.location.href = 'login.php'; // Ανακατεύθυνση στη σελίδα εισόδου
-                // "Παγώνουμε" την εκτέλεση για να μην συνεχίσει ο υπόλοιπος κώδικας
-                return Promise.reject(new Error('Unauthorized')); 
-            }
-
-            if (!response.ok) {
-                // Χειρισμός άλλων HTTP σφαλμάτων (π.χ. 404, 500)
-                const errorData = await response.json().catch(() => ({ message: 'Άγνωστο σφάλμα server.' }));
-                return Promise.reject(errorData);
-            }
-            
-            // Για 204 No Content (π.χ. σε επιτυχημένη διαγραφή χωρίς σώμα απάντησης)
-            if (response.status === 204) {
-                return Promise.resolve();
-            }
-
-            return response.json(); // Επιστροφή των δεδομένων JSON
-
-        } catch (error) {
-            console.error('Fetch Error:', error);
-            return Promise.reject(error);
-        }
-    }
 
 
 

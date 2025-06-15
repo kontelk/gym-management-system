@@ -12,7 +12,9 @@ include 'templates/header.php';
                 <div class="card-body">
                     <h5 class="card-title"><em>Διαχείριση Χρηστών</em></h5>
                     <p class="card-text">Προβολή όλων των χρηστών και έγκριση νέων αιτημάτων εγγραφής.</p>
-                    <a href="admin_users.php" class="btn btn-primary">Μετάβαση</a>
+                    <div class="d-flex justify-content-center">
+                        <a href="admin_users.php" class="btn btn-primary">Μετάβαση</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -22,7 +24,9 @@ include 'templates/header.php';
                 <div class="card-body">
                     <h5 class="card-title"><em>Διαχείριση Προγραμμάτων</em></h5>
                     <p class="card-text">Προβολή όλων των προγραμμάτων για την διαχείρισή τους.</p>
-                    <a href="admin_programs.php" class="btn btn-primary">Μετάβαση</a>
+                    <div class="d-flex justify-content-center">
+                        <a href="admin_programs.php" class="btn btn-primary">Μετάβαση</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -32,8 +36,9 @@ include 'templates/header.php';
                 <div class="card-body">
                     <h5 class="card-title"><em>Χρονοπρογραμματισμός</em></h5>
                     <p class="card-text">Προβολή και διαχείριση των των κρατήσεων των χρηστών.</p>
-
-                    <a href="admin_schedule.php" class="btn btn-primary">Μετάβαση</a>
+                    <div class="d-flex justify-content-center">
+                        <a href="admin_schedule.php" class="btn btn-primary">Μετάβαση</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -43,7 +48,9 @@ include 'templates/header.php';
                 <div class="card-body">
                     <h5 class="card-title"><em>Διαχείριση Γυμναστών</em></h5>
                     <p class="card-text">Προσθήκη, επεξεργασία και διαγραφή των γυμναστών του συστήματος.</p>
-                    <a href="admin_trainers.php" class="btn btn-primary">Μετάβαση</a>
+                    <div class="d-flex justify-content-center">
+                        <a href="admin_trainers.php" class="btn btn-primary">Μετάβαση</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -53,7 +60,9 @@ include 'templates/header.php';
                 <div class="card-body">
                     <h5 class="card-title"><em>Διαχείριση Ανακοινώσεων</em></h5>
                     <p class="card-text">Δημιουργία, επεξεργασία και διαγραφή νέων και προσφορών για τους χρήστες.</p>
-                    <a href="admin_announcements.php" class="btn btn-primary">Μετάβαση</a>
+                    <div class="d-flex justify-content-center">
+                         <a href="admin_announcements.php" class="btn btn-primary">Μετάβαση</a>
+                    </div>
                 </div>
             </div>
         </div>
