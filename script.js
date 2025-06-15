@@ -1466,34 +1466,41 @@ document.addEventListener('DOMContentLoaded', function() {
     if (announcementsContainer) {
         announcementsContainer.innerHTML = '<p class="text-center">Φόρτωση ανακοινώσεων...</p>';
 
-        fetch(`${apiBaseUrl}/announcements/read.php`)
-            .then(response => response.json())
+        apiFetch(`${apiBaseUrl}/announcements/read.php`)
             .then(data => {
                 announcementsContainer.innerHTML = ''; // Καθαρισμός του container
                 
-                if (data.message) {
+                if (data && data.message && !Array.isArray(data)) {
+                    // Αν η απάντηση είναι αντικείμενο με μήνυμα (π.χ. "Δεν βρέθηκαν ανακοινώσεις")
                     announcementsContainer.innerHTML = `<div class="list-group-item">${data.message}</div>`;
-                    return;
-                }
-
-                data.forEach(announcement => {
-                    // **ΑΛΛΑΓΗ ΕΔΩ: Προσθέσαμε την κλάση 'bg-warning-subtle'**
-                    const item = `
-                        <div class="list-group-item list-group-item-action flex-column align-items-start mb-2 bg-warning-subtle">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1"><em>${announcement.title}</em></h5>
-                                <small>${new Date(announcement.created_at).toLocaleDateString('el-GR')}</small>
+                } else if (Array.isArray(data) && data.length === 0) {
+                    // Αν η απάντηση είναι κενός πίνακας
+                    announcementsContainer.innerHTML = `<div class="list-group-item">Δεν υπάρχουν διαθέσιμες ανακοινώσεις.</div>`;
+                } else if (Array.isArray(data)) {
+                    // Αν η απάντηση είναι πίνακας με ανακοινώσεις
+                    data.forEach(announcement => {
+                        // **ΑΛΛΑΓΗ ΕΔΩ: Προσθέσαμε την κλάση 'bg-warning-subtle'** (Αυτή η γραμμή υπήρχε ήδη)
+                        const item = `
+                            <div class="list-group-item list-group-item-action flex-column align-items-start mb-2 bg-warning-subtle">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1"><em>${announcement.title}</em></h5>
+                                    <small>${new Date(announcement.created_at).toLocaleDateString('el-GR')}</small>
+                                </div>
+                                <p class="mb-1">${announcement.content}</p>
+                                <small>Από: ${announcement.author}</small>
                             </div>
-                            <p class="mb-1">${announcement.content}</p>
-                            <small>Από: ${announcement.author}</small>
-                        </div>
-                    `;
-                    announcementsContainer.innerHTML += item;
-                });
+                        `;
+                        announcementsContainer.innerHTML += item;
+                    });
+                } else {
+                    // Για απρόσμενη μορφή δεδομένων ή αν το data είναι undefined (π.χ. από 204 status)
+                    announcementsContainer.innerHTML = `<div class="alert alert-warning">Μη αναμενόμενη απάντηση κατά τη φόρτωση των ανακοινώσεων.</div>`;
+                    console.error("Unexpected data format for announcements:", data);
+                }
             })
             .catch(error => {
                 console.error('Error fetching announcements:', error);
-                announcementsContainer.innerHTML = '<div class="alert alert-danger">Αδυναμία φόρτωσης των ανακοινώσεων.</div>';
+                announcementsContainer.innerHTML = `<div class="alert alert-danger">Αδυναμία φόρτωσης των ανακοινώσεων: ${error.message || 'Προέκυψε σφάλμα'}.</div>`;
             });
     }
 

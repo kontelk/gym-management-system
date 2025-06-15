@@ -35,21 +35,9 @@ include 'templates/header.php';
             <div class="card bg-primary-subtle">
                 <div class="card-body">
                     <h5 class="card-title"><em>Χρονοπρογραμματισμός</em></h5>
-                    <p class="card-text">Προβολή και διαχείριση των των κρατήσεων των χρηστών.</p>
+                    <p class="card-text">Διαχείριση του χρονοπρογραμματισμού των κρατήσεων των χρηστών.</p>
                     <div class="d-flex justify-content-center">
                         <a href="admin_schedule.php" class="btn btn-primary">Μετάβαση</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <div class="card bg-primary-subtle">
-                <div class="card-body">
-                    <h5 class="card-title"><em>Διαχείριση Γυμναστών</em></h5>
-                    <p class="card-text">Προσθήκη, επεξεργασία και διαγραφή των γυμναστών του συστήματος.</p>
-                    <div class="d-flex justify-content-center">
-                        <a href="admin_trainers.php" class="btn btn-primary">Μετάβαση</a>
                     </div>
                 </div>
             </div>
@@ -62,6 +50,18 @@ include 'templates/header.php';
                     <p class="card-text">Δημιουργία, επεξεργασία και διαγραφή νέων και προσφορών για τους χρήστες.</p>
                     <div class="d-flex justify-content-center">
                          <a href="admin_announcements.php" class="btn btn-primary">Μετάβαση</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card bg-primary-subtle">
+                <div class="card-body">
+                    <h5 class="card-title"><em>Διαχείριση Γυμναστών</em></h5>
+                    <p class="card-text">Προσθήκη, επεξεργασία και διαγραφή των γυμναστών του συστήματος.</p>
+                    <div class="d-flex justify-content-center">
+                        <a href="admin_trainers.php" class="btn btn-primary">Μετάβαση</a>
                     </div>
                 </div>
             </div>
