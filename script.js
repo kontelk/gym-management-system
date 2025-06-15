@@ -678,13 +678,12 @@ document.addEventListener('DOMContentLoaded', function() {
         function fetchMyBookings() {
             bookingsContainer.innerHTML = '<tr><td colspan="4" class="text-center">Φόρτωση κρατήσεων...</td></tr>';
 
-            fetch(`${apiBaseUrl}/bookings/read_by_user.php`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(res => res.json())
+            apiFetch(`${apiBaseUrl}/bookings/read_by_user.php`)
             .then(data => {
                 bookingsContainer.innerHTML = '';
-                if (data.message) {
+                // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
+                // ή αν είναι ένας κενός πίνακας.
+                if (data && data.message && !Array.isArray(data)) {
                     bookingsContainer.innerHTML = `<tr><td colspan="4" class="text-center">${data.message}</td></tr>`;
                     return;
                 }
@@ -717,6 +716,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                     bookingsContainer.innerHTML += row;
                 });
+            })
+            .catch(error => {
+                console.error('Error fetching my bookings:', error);
+                bookingsContainer.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Σφάλμα φόρτωσης κρατήσεων: ${error.message || 'Προέκυψε σφάλμα'}</td></tr>`;
+                // Εμφάνιση του σφάλματος και στο messageArea για συνέπεια
+                messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα φόρτωσης κρατήσεων: ${error.message || 'Προέκυψε σφάλμα'}</div>`;
+                setTimeout(() => { messageArea.innerHTML = ''; }, 5000);
             });
         }
         
@@ -732,18 +738,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // --- Συνάρτηση για ακύρωση κράτησης ---
         function cancelBooking(bookingId) {
-            fetch(`${apiBaseUrl}/bookings/cancel.php`, {
+            apiFetch(`${apiBaseUrl}/bookings/cancel.php`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({ booking_id: bookingId })
             })
-            .then(res => res.json().then(data => ({ status: res.status, body: data })))
-            .then(({ status, body }) => {
-                messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+            // Η apiFetch επιστρέφει ήδη το body.message σε περίπτωση σφάλματος,
+            // και τα δεδομένα σε περίπτωση επιτυχίας.
+            .then(data => {
+                messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Η κράτηση ακυρώθηκε επιτυχώς.'}</div>`;
                 fetchMyBookings(); // Ανανέωση της λίστας
+                setTimeout(() => { messageArea.innerHTML = ''; }, 5000);
+            })
+            .catch(error => {
+                console.error('Error cancelling booking:', error);
+                messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα ακύρωσης κράτησης: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
                 setTimeout(() => { messageArea.innerHTML = ''; }, 5000);
             });
         }
