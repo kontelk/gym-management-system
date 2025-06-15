@@ -675,15 +675,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const bookingsContainer = document.getElementById('my-bookings-container');
         const messageArea = document.getElementById('message-area');
 
-        // --- Προστασία Σελίδας ---
-        // Ελέγχουμε αν ο χρήστης είναι συνδεδεμένος και έχει ρόλο χρήστη
         function fetchMyBookings() {
-            bookingsContainer.innerHTML = '<tr><td colspan="4" class="text-center text-success">Φόρτωση κρατήσεων...</td></tr>';
+            bookingsContainer.innerHTML = '<tr><td colspan="4" class="text-center">Φόρτωση κρατήσεων...</td></tr>';
 
-            apiFetch(`${apiBaseUrl}/bookings/read_by_user.php`)//, {
-            //     headers: { 'Authorization': `Bearer ${token}` }
-            // })
-            //.then(res => res.json())
+            fetch(`${apiBaseUrl}/bookings/read_by_user.php`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
             .then(data => {
                 bookingsContainer.innerHTML = '';
                 if (data.message) {
@@ -719,10 +717,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                     bookingsContainer.innerHTML += row;
                 });
-            })
-            .catch(err => {
-                console.error('Error fetching bookings:', err);
-                bookingsContainer.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Σφάλμα φόρτωσης κρατήσεων.</td></tr>';
             });
         }
         
