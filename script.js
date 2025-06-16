@@ -184,13 +184,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const formattedSeconds = seconds < 10 ? `0${seconds}` : seconds;
             timerText.textContent = `${formattedMinutes}:${formattedSeconds}`;
 
-            // Ενημέρωση του κυκλικού progress bar
-            const totalDuration = decodedToken.exp - decodedToken.iat;
-            const elapsed = totalDuration - remainingSeconds;
-            const percentage = Math.round((elapsed / totalDuration) * 100);
-            
-            // Το conic-gradient λειτουργεί αντίστροφα, οπότε αφαιρούμε από 100
-            timerElement.style.setProperty('--p', 100 - percentage);
+            // Ενημέρωση του κυκλικού progress bar μόνο αν υπάρχει το iat
+            if (decodedToken.iat) {
+                const totalDuration = decodedToken.exp - decodedToken.iat;
+                if (totalDuration > 0) { // Αποφυγή διαίρεσης με μηδέν ή αρνητικό
+                    const elapsed = totalDuration - remainingSeconds;
+                    const percentage = Math.round((elapsed / totalDuration) * 100);
+                    timerElement.style.setProperty('--p', 100 - percentage); // Το conic-gradient λειτουργεί αντίστροφα
+                }
+            }
         };
         
         updateTimerDisplay(); // Αρχική εμφάνιση
@@ -1138,6 +1140,14 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error saving program:', error);
+
+                // Καθαρισμός προηγούμενων is-invalid από όλα τα πεδία της φόρμας
+                const formElements = e.target.elements; // e.target είναι η φόρμα programForm
+                for (let i = 0; i < formElements.length; i++) {
+                    if (formElements[i].classList) {
+                        formElements[i].classList.remove('is-invalid');
+                    }
+                }
                 // Εμφάνιση σφαλμάτων validation αν υπάρχουν
                 if (error && error.errors) {
                     let errorMessage = error.message || 'Παρακαλώ διορθώστε τα παρακάτω σφάλματα:';
@@ -1594,6 +1604,14 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error saving announcement:', error);
+
+                // Καθαρισμός προηγούμενων is-invalid από όλα τα πεδία της φόρμας
+                const formElements = e.target.elements; // e.target είναι η φόρμα announcementForm
+                for (let i = 0; i < formElements.length; i++) {
+                    if (formElements[i].classList) {
+                        formElements[i].classList.remove('is-invalid');
+                    }
+                }
                 if (error && error.errors) {
                     let errorMessage = error.message || 'Παρακαλώ διορθώστε τα παρακάτω σφάλματα:';
                     let errorsList = '<ul>';
@@ -1793,6 +1811,14 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error saving trainer:', error);
+
+                // Καθαρισμός προηγούμενων is-invalid από όλα τα πεδία της φόρμας
+                const formElements = e.target.elements; // e.target είναι η φόρμα trainerForm
+                for (let i = 0; i < formElements.length; i++) {
+                    if (formElements[i].classList) {
+                        formElements[i].classList.remove('is-invalid');
+                    }
+                }
                 if (error && error.errors) {
                     let errorMessage = error.message || 'Παρακαλώ διορθώστε τα παρακάτω σφάλματα:';
                     let errorsList = '<ul>';
