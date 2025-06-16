@@ -9,7 +9,7 @@ body {
 /* Διασφάλιση ότι το navbar είναι πάντα ορατό */
 nav.navbar {
     position: relative; /* Το Bootstrap το θέτει ήδη, αλλά για σιγουριά */
-    z-index: 1050;  /* Αρκετά υψηλό z-index για να είναι πάνω από τα περισσότερα στοιχεία */
+    z-index: 1050;  /* Μειώθηκε για να είναι κάτω από το modal backdrop (default 1050) */
 }
 
 main {
@@ -24,8 +24,11 @@ main > .container.mt-4 {
     flex-grow: 1; /* Επιτρέπει σε αυτό το container να καταλάβει τον διαθέσιμο χώρο μέσα στο main */
     display: flex;
     flex-direction: column; /* Τα παιδιά του στοιχίζονται κάθετα (jumbotron, announcements) */
-    position: relative; /* Για stacking context του z-index */
-    z-index: 1; /* Για να είναι πάνω από το background carousel */
+    position: relative; /* Για stacking context και σωστή λειτουργία του flex layout */
+}
+
+body.has-bg-carousel main > .container.mt-4 {
+    z-index: 1; /* Εφαρμογή z-index μόνο όταν υπάρχει η κλάση .has-bg-carousel στο body */
 }
 
 /* Στυλ για το jumbotron μέσα στο νέο container */
@@ -109,7 +112,7 @@ main > .container.mt-4 > .container.mt-5 {
 
 /* Στυλ για τις κάρτες ανακοινώσεων στην αρχική σελίδα */
 #announcements-container .list-group-item {
-    background-color: rgba(108, 117, 125, 0.8); /* 80% διαφάνεια, βασισμένο στο secondary χρώμα του Bootstrap */
+    background-color: rgba(108, 117, 125, 0.6); /* 40% διαφάνεια (60% opacity), βασισμένο στο secondary χρώμα του Bootstrap */
     color: white; /* Λευκό χρώμα κειμένου για αντίθεση */
     border: 1px solid rgba(255, 255, 255, 0.15); /* Διακριτικό λευκό περίγραμμα */
     margin-bottom: 0.75rem !important; /* Εξασφάλιση του κάτω margin */
@@ -117,7 +120,7 @@ main > .container.mt-4 > .container.mt-5 {
 
 #announcements-container .list-group-item.list-group-item-action:hover,
 #announcements-container .list-group-item.list-group-item-action:focus {
-    background-color: rgba(108, 117, 125, 0.9); /* Ελαφρώς λιγότερο διαφανές στο hover/focus */
+    background-color: rgba(108, 117, 125, 0.7); /* Ελαφρώς λιγότερο διαφανές (30% transparency) στο hover/focus */
     color: white; /* Διατήρηση λευκού χρώματος κειμένου */
 }
 

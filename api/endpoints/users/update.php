@@ -23,9 +23,9 @@ if (!empty($data->id) /* && ... άλλοι έλεγχοι ... */ ) {
     $user->email = $data->email;
     $user->first_name = $data->first_name;
     $user->last_name = $data->last_name;
-    // $user->country = $data->country;
-    // $user->city = $data->city;
-    // $user->address = $data->address;
+    $user->country = $data->country ?? null; // Χρήση null coalescing για προαιρετικά πεδία
+    $user->city = $data->city ?? null;       // Χρήση null coalescing για προαιρετικά πεδία
+    $user->address = $data->address ?? null; // Χρήση null coalescing για προαιρετικά πεδία
     $user->role_id = $data->role_id;
     $user->status = $data->status;
     // Αν δόθηκε νέος κωδικός

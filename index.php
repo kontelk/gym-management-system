@@ -1,5 +1,6 @@
 <?php
 // Συμπερίληψη του header
+$body_class = 'has-bg-carousel'; // Προσθήκη κλάσης για το body
 include 'templates/header.php';
 ?>
 
@@ -26,7 +27,7 @@ include 'templates/header.php';
     </div>
 
     <div class="container mt-5">
-        <h3 class="text-center mb-4 text-white">Τελευταία Νέα & Ανακοινώσεις</h3>
+        <!-- <h3 class="text-center mb-4 text-white">Τελευταία Νέα & Ανακοινώσεις</h3> -->
         <div id="announcements-container" class="list-group">
         </div>
     </div>

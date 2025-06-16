@@ -91,6 +91,24 @@ include 'templates/header.php';
                                     <div class="invalid-feedback">Το email είναι υποχρεωτικό και πρέπει να είναι έγκυρο.</div>
                                 </div>
 
+                                <!-- Προσθήκη πεδίων χώρας και πόλης -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="user-country-select" class="form-label">Χώρα (*)</label>
+                                        <select class="form-select" id="user-country-select" name="country" required autocomplete="country-name">
+                                            <option selected disabled value="">Φόρτωση χωρών...</option>
+                                        </select>
+                                        <div class="invalid-feedback">Παρακαλώ επιλέξτε χώρα.</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="user-city-select" class="form-label">Πόλη (*)</label>
+                                        <select class="form-select" id="user-city-select" name="city" required disabled autocomplete="address-level2">
+                                            <option selected disabled value="">Επιλέξτε πρώτα χώρα</option>
+                                        </select>
+                                        <div class="invalid-feedback">Παρακαλώ επιλέξτε πόλη.</div>
+                                    </div>
+                                </div>
+
                                 <div class="mb-3">
                                     <label for="user-role" class="form-label">Ρόλος (*)</label>
                                     <select class="form-select" id="user-role" required>

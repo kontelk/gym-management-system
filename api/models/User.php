@@ -268,7 +268,8 @@ class User {
         $query = "UPDATE " . $this->table_name . "
                   SET
                     username = :username, email = :email, 
-                    first_name = :first_name, last_name = :last_name, 
+                    first_name = :first_name, last_name = :last_name,
+                    country = :country, city = :city, address = :address, 
                     role_id = :role_id, status = :status";
 
         if (!empty($this->password)) {
@@ -284,9 +285,9 @@ class User {
         $this->email = htmlspecialchars(strip_tags($this->email));
         $this->first_name = htmlspecialchars(strip_tags($this->first_name));
         $this->last_name = htmlspecialchars(strip_tags($this->last_name));
-        // $this->country = htmlspecialchars(strip_tags($this->country));
-        // $this->city = htmlspecialchars(strip_tags($this->city));
-        // $this->address = htmlspecialchars(strip_tags($this->address));
+        $this->country = htmlspecialchars(strip_tags($this->country ?? '')); // Προεπιλογή σε κενό string αν είναι null
+        $this->city = htmlspecialchars(strip_tags($this->city ?? ''));       // Προεπιλογή σε κενό string αν είναι null
+        $this->address = htmlspecialchars(strip_tags($this->address ?? '')); // Προεπιλογή σε κενό string αν είναι null
         $this->role_id = htmlspecialchars(strip_tags($this->role_id));
         $this->status = htmlspecialchars(strip_tags($this->status));
         $this->id = htmlspecialchars(strip_tags($this->id));
@@ -296,9 +297,9 @@ class User {
         $stmt->bindParam(':email', $this->email);
         $stmt->bindParam(':first_name', $this->first_name);
         $stmt->bindParam(':last_name', $this->last_name);
-        // $stmt->bindParam(':country', $this->country);
-        // $stmt->bindParam(':city', $this->city);
-        // $stmt->bindParam(':address', $this->address);
+        $stmt->bindParam(':country', $this->country);
+        $stmt->bindParam(':city', $this->city);
+        $stmt->bindParam(':address', $this->address);
         $stmt->bindParam(':role_id', $this->role_id);
         $stmt->bindParam(':status', $this->status);
         $stmt->bindParam(':id', $this->id);

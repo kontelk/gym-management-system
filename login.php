@@ -45,11 +45,13 @@ include 'templates/header.php';
                 <form id="login-form">
                     <div class="mb-3">
                         <label for="username" class="form-label">Όνομα Χρήστη</label>
-                        <input type="text" class="form-control" id="username" name="username" required autocomplete="username">
+                        <input type="text" class="form-control" id="username" name="username" required autocomplete="off">
+                        <div class="invalid-feedback">Το όνομα χρήστη είναι υποχρεωτικό.</div>
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Κωδικός Πρόσβασης</label>
-                        <input type="password" class="form-control" id="password" name="password" required autocomplete="current-password">
+                        <input type="password" class="form-control" id="password" name="password" required autocomplete="off">
+                        <div class="invalid-feedback">Ο κωδικός πρόσβασης είναι υποχρεωτικός.</div>
                     </div>
                     <div class="d-grid mb-3">
                         <button type="submit" class="btn btn-primary">Είσοδος</button>

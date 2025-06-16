@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
         logoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
             localStorage.removeItem('jwt');
-            window.location.href = 'login.php'; // Ανακατεύθυνση στη σελίδα εισόδου
+            window.location.href = 'index.php'; // Ανακατεύθυνση στην αρχική σελίδα
         });
     }
 
@@ -619,12 +619,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Η apiFetch επιστρέφει το body της επιτυχούς απάντησης (π.χ. 201)
             .then(data => {
                 messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Η κράτηση δημιουργήθηκε επιτυχώς!'}</div>`;
-                // Ανανέωση της λίστας διαθεσιμότητας
-                if (programId && datePicker.value) {
-                    fetchAvailability(programId, datePicker.value);
-                }
-                // Σβήσιμο του μηνύματος μετά από 5 δευτερόλεπτα
-                setTimeout(() => { messageArea.innerHTML = ''; }, 5000);
+                // **ΝΕΟ: Ανακατεύθυνση στη σελίδα "Οι Κρατήσεις μου" μετά από μικρή καθυστέρηση**
+                setTimeout(() => {
+                    window.location.href = 'my_bookings.php';
+                }, 1500); // Καθυστέρηση 1.5 δευτερόλεπτο για να φανεί το μήνυμα
             })
             .catch(error => {
                 console.error('Error creating booking:', error);
@@ -1636,14 +1634,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    // =================================================================
-    // 11. ΛΟΓΙΚΗ ΦΟΡΤΩΣΗΣ ΑΝΑΚΟΙΝΩΣΕΩΝ ΣΤΗΝ ΑΡΧΙΚΗ ΣΕΛΙΔΑ (ΕΝΗΜΕΡΩΜΕΝΗ)
-    // =================================================================
-    const announcementsContainer = document.getElementById('announcements-container');
-
+    // ====================================================================================
+    // 11. ΛΟΓΙΚΗ ΦΟΡΤΩΣΗΣ ΑΝΑΚΟΙΝΩΣΕΩΝ ΣΤΗΝ ΑΡΧΙΚΗ ΣΕΛΙΔΑ (ΜΟΝΟ ΣΕ ΕΓΓΕΓΡΑΜΜΕΝΟΥΣ ΧΡΗΣΤΕΣ)
+    // ====================================================================================
+    
     // Εκτέλεση μόνο αν βρισκόμαστε στην αρχική σελίδα (όπου υπάρχει το container)
-    if (announcementsContainer) {
-        announcementsContainer.innerHTML = '<p class="text-center">Φόρτωση ανακοινώσεων...</p>';
+    // και αν ο χρήστης είναι συνδεδεμένος (έχει token)
+    const announcementsContainer = document.getElementById('announcements-container');
+    const token = localStorage.getItem('jwt');
+    if (announcementsContainer && token) {
+        // Προσθήκη μηνύματος φόρτωσης (λευκό χρώμα)
+        announcementsContainer.innerHTML = '<p class="text-center text-white">Φόρτωση ανακοινώσεων...</p>';
 
         apiFetch(`${apiBaseUrl}/announcements/read.php`)
             .then(data => {
@@ -1657,6 +1658,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     announcementsContainer.innerHTML = `<div class="list-group-item">Δεν υπάρχουν διαθέσιμες ανακοινώσεις.</div>`;
                 } else if (Array.isArray(data)) {
                     // Αν η απάντηση είναι πίνακας με ανακοινώσεις
+                    // Προσθήκη τίτλου μόνο αν υπάρχουν ανακοινώσεις
+                    announcementsContainer.innerHTML += '<h3 class="text-center mb-4 text-white">Τελευταία Νέα & Ανακοινώσεις</h3>'; 
                     data.forEach(announcement => {
                         // **ΑΛΛΑΓΗ ΕΔΩ: Προσθέσαμε την κλάση 'bg-warning-subtle'** (Αυτή η γραμμή υπήρχε ήδη)
                         const item = `

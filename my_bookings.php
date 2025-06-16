@@ -5,7 +5,7 @@ include 'templates/header.php';
 <div id="my-bookings-page-identifier" class="d-none"></div>
 
 <div class="container">
-    <h2 class="text-center mb-4">Το Ιστορικό των Κρατήσεών μου</h2>
+    <h2 class="text-center mb-4">Οι Κρατήσεις μου</h2>
 
     <div id="message-area" class="mt-3"></div>
 

@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" href="favicon.ico">
 </head>
 
-<body>
+<body class="<?php echo $body_class ?? ''; ?>">
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container-fluid">
