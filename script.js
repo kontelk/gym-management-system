@@ -140,79 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Κλήση της updateNavbar() σε κάθε φόρτωση σελίδας
     updateNavbar();
 
-
-
-    // // =================================================================
-    // // 2. ΛΟΓΙΚΗ ΦΟΡΜΑΣ ΕΙΣΟΔΟΥ
-    // // =================================================================
-
-    // const loginForm = document.getElementById('login-form');
-    // const messageArea = document.getElementById('message-area');
-
-    // // Αυτός ο κώδικας θα εκτελεστεί μόνο αν υπάρχει η φόρμα εισόδου στη σελίδα
-    // if (loginForm) {
-    //     loginForm.addEventListener('submit', function(e) {
-    //         e.preventDefault(); // Αποτρέπουμε την προεπιλεγμένη συμπεριφορά της φόρμας
-
-    //         const username = document.getElementById('username').value;
-    //         const password = document.getElementById('password').value;
-
-    //         // Δεδομένα που θα στείλουμε στο API
-    //         const loginData = {
-    //             username: username,
-    //             password: password
-    //         };
-
-    //         // Κλήση στο API με τη μέθοδο fetch
-    //         fetch(`${apiBaseUrl}/users/login.php`, {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json'
-    //             },
-    //             body: JSON.stringify(loginData)
-    //         })
-    //         .then(response => response.json())
-    //         .then(data => {
-    //             if (data.jwt) {
-    //                 // Επιτυχής είσοδος
-    //                 messageArea.innerHTML = `<div class="alert alert-success">Η είσοδος ήταν επιτυχής.</div>`;
-    //                 localStorage.setItem('jwt', data.jwt); // Αποθήκευση του token
-
-    //                 // Ανακατεύθυνση ανάλογα με τον ρόλο
-    //                 const decodedToken = parseJwt(data.jwt);
-    //                 setTimeout(() => {
-    //                     if (decodedToken.data.role_id === 1) {
-    //                         window.location.href = 'admin_dashboard.php';
-    //                     } else {
-    //                         window.location.href = 'index.php';
-    //                     }
-    //                 }, 1000); // Μικρή καθυστέρηση για να δει ο χρήστης το μήνυμα
-
-    //             } else {
-    //                 // Αποτυχημένη είσοδος
-    //                 messageArea.innerHTML = `<div class="alert alert-danger">${data.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
-    //             }
-    //         })
-    //         .catch(error => {
-    //             console.error('Error:', error);
-    //             messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα επικοινωνίας με τον server.</div>`;
-    //         });
-    //     });
-    // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
     // =================================================================
     // 2. ΛΟΓΙΚΗ ΦΟΡΜΑΣ ΕΙΣΟΔΟΥ ΚΑΙ ΧΡΟΝΟΜΕΤΡΟΥ ΛΗΞΗΣ JWT
     // =================================================================
@@ -272,14 +200,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listener για την ανανέωση του token
     document.getElementById('jwt-timer')?.addEventListener('click', () => {
         // if (!confirm('Θέλετε να ανανεώσετε τον χρόνο της συνδεσής σας;')) return;
-        apiFetch(`${apiBaseUrl}/users/refresh_token.php`)
+        // Η apiFetch θα στείλει αυτόματα το υπάρχον token στο header Authorization
+        apiFetch(`${apiBaseUrl}/users/refresh_token.php`, { method: 'POST' }) // Προσθέτουμε method: 'POST' αν το API το απαιτεί για refresh
             .then(data => {
                 if (data.jwt) {
                     localStorage.setItem('jwt', data.jwt); // Αποθήκευση του νέου token
                     startJwtTimer(data.jwt); // Επανεκκίνηση του timer με το νέο token
                 }
             })
-            .catch(error => console.error('Token refresh failed:', error));
+            .catch(error => {
+                console.error('Token refresh failed:', error);
+                // Εδώ θα μπορούσατε να εμφανίσετε ένα μήνυμα στον χρήστη, π.χ. μέσω του messageArea αν υπάρχει στη σελίδα
+            });
     });
 
     // --- Τροποποίηση της Λογικής του Login ---
@@ -304,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Κλήση στο API για login
             apiFetch(`${apiBaseUrl}/users/login.php`, {
                 method: 'POST',
-                body: JSON.stringify({username: e.target.username.value, password: e.target.password.value})
+                body: JSON.stringify(loginData) // Χρήση του loginData που ορίστηκε παραπάνω
             })
             .then(data => {
                 if (data.jwt) {
@@ -320,7 +252,10 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 const messageArea = document.getElementById('message-area');
-                messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
+                if (messageArea) {
+                    messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα κατά τη σύνδεση.'}</div>`;
+                }
+                console.error('Login error:', error);
             });
         });
     }
@@ -379,8 +314,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // --- Φόρτωση Χωρών από εξωτερικό API ---
-        fetch('https://countriesnow.space/api/v0.1/countries/positions')
-            .then(response => response.json())
+        apiFetch('https://countriesnow.space/api/v0.1/countries/positions')
             .then(data => {
                 if (!data.error) {
                     countrySelect.innerHTML = '<option selected disabled value="">Επιλέξτε χώρα</option>'; // Καθαρισμός των αρχικών options
@@ -391,10 +325,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         countrySelect.appendChild(option);
                     });
                 } else {
-                     countrySelect.innerHTML = '<option selected disabled value="">Σφάλμα φόρτωσης</option>';
+                     countrySelect.innerHTML = `<option selected disabled value="">Σφάλμα φόρτωσης: ${data.msg || 'Άγνωστο σφάλμα API'}</option>`;
                 }
             })
-            .catch(error => console.error('Error fetching countries:', error));
+            .catch(error => {
+                console.error('Error fetching countries:', error);
+                countrySelect.innerHTML = `<option selected disabled value="">Σφάλμα φόρτωσης χωρών: ${error.message || 'Πρόβλημα δικτύου'}</option>`;
+            });
 
         // --- Event Listener για αλλαγή χώρας ---
         countrySelect.addEventListener('change', function() {
@@ -404,12 +341,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (selectedCountry) {
                 // Κλήση στο API για τις πόλεις της επιλεγμένης χώρας
-                fetch('https://countriesnow.space/api/v0.1/countries/cities', {
+                apiFetch('https://countriesnow.space/api/v0.1/countries/cities', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ country: selectedCountry })
                 })
-                .then(response => response.json())
                 .then(data => {
                     if (!data.error && data.data.length > 0) {
                         citySelect.innerHTML = '<option selected disabled value="">Επιλέξτε πόλη</option>';
@@ -421,10 +356,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                         citySelect.disabled = false;
                     } else {
-                        citySelect.innerHTML = '<option selected disabled value="">Δεν βρέθηκαν πόλεις</option>';
+                        citySelect.innerHTML = `<option selected disabled value="">${data.msg || 'Δεν βρέθηκαν πόλεις'}</option>`;
+                        // citySelect.disabled = true; // Ήδη είναι disabled, αλλά για σιγουριά
                     }
                 })
-                .catch(error => console.error('Error fetching cities:', error));
+                .catch(error => {
+                    console.error('Error fetching cities:', error);
+                    citySelect.innerHTML = `<option selected disabled value="">Σφάλμα φόρτωσης πόλεων: ${error.message || 'Πρόβλημα δικτύου'}</option>`;
+                });
             }
         });
 
@@ -455,42 +394,43 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             // Κλήση στο δικό μας API για την εγγραφή
-            fetch(`${apiBaseUrl}/users/register.php`, {
+            apiFetch(`${apiBaseUrl}/users/register.php`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(registerData)
             })
-            .then(response => response.json().then(data => ({ status: response.status, body: data })))
-            .then(({ status, body }) => {
+            .then(body => { // Η apiFetch επιστρέφει το body της επιτυχούς απάντησης (π.χ. 201)
                 // Πρώτα, καθαρίζουμε όλα τα προηγούμενα σφάλματα
                 registerForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
                 
-                if (status === 201) { // Επιτυχία
-                    messageArea.innerHTML = `<div class="alert alert-success">${body.message}</div>`;
-                    registerForm.reset();
-                    registerForm.querySelectorAll('.is-valid').forEach(el => el.classList.remove('is-valid'));
-                    citySelect.disabled = true;
-                } else if (status === 422) { // Σφάλματα Validation από τον Server
-                    messageArea.innerHTML = `<div class="alert alert-danger">${body.message}</div>`;
-                    // Εμφάνιση συγκεκριμένων σφαλμάτων κάτω από κάθε πεδίο
-                    for (const field in body.errors) {
+                messageArea.innerHTML = `<div class="alert alert-success">${body.message}</div>`;
+                registerForm.reset();
+                registerForm.querySelectorAll('.is-valid').forEach(el => el.classList.remove('is-valid'));
+                citySelect.disabled = true;
+                citySelect.innerHTML = '<option selected disabled value="">Επιλέξτε πόλη</option>'; // Επαναφορά του city select
+            })
+            .catch(error => { // Η apiFetch χειρίζεται τα HTTP errors και τα στέλνει εδώ
+                console.error('Registration Error:', error);
+                // Καθαρίζουμε τυχόν παλιά is-valid classes
+                registerForm.querySelectorAll('.is-valid').forEach(el => el.classList.remove('is-valid'));
+                // Καθαρίζουμε παλιά σφάλματα πριν εμφανίσουμε νέα
+                registerForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                registerForm.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+
+                if (error && error.message && error.errors) { // Σφάλματα Validation από τον Server (π.χ. 422)
+                    messageArea.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+                    for (const field in error.errors) {
                         const input = document.getElementById(field);
                         if (input) {
                             input.classList.add('is-invalid');
-                            // Βρίσκουμε το div για το feedback που είναι "αδερφός" του input
                             const feedbackDiv = input.nextElementSibling;
                             if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
-                                feedbackDiv.textContent = body.errors[field];
+                                feedbackDiv.textContent = error.errors[field];
                             }
                         }
                     }
-                } else { // Άλλα σφάλματα
-                    messageArea.innerHTML = `<div class="alert alert-danger">${body.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
+                } else { // Άλλα σφάλματα (π.χ. 500, ή σφάλμα δικτύου από την apiFetch)
+                    messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα κατά την εγγραφή.'}</div>`;
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα επικοινωνίας με τον server.</div>`;
             });
 
         });
@@ -505,39 +445,66 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (programsContainer) {
         const messageArea = document.getElementById('message-area');
+        // Προαιρετικά: Εμφάνιση μηνύματος φόρτωσης
+        // programsContainer.innerHTML = '<p class="text-center">Φόρτωση προγραμμάτων...</p>';
 
-        fetch(`${apiBaseUrl}/programs/read.php`)
-            .then(response => response.json())
+        apiFetch(`${apiBaseUrl}/programs/read.php`)
             .then(data => {
-                // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
-                if (data.message) {
-                    messageArea.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                // Case 1: Η απάντηση είναι αντικείμενο με μήνυμα (π.χ. "Δεν βρέθηκαν προγράμματα")
+                if (data && data.message && !Array.isArray(data)) {
+                    if (messageArea) {
+                        messageArea.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                    }
+                    programsContainer.innerHTML = ''; // Καθαρισμός του container
                     return;
                 }
 
-                // Αν έχουμε δεδομένα, καθαρίζουμε το container
-                programsContainer.innerHTML = '';
+                // Case 2: Η απάντηση είναι κενός πίνακας
+                if (Array.isArray(data) && data.length === 0) {
+                    if (messageArea) {
+                        messageArea.innerHTML = `<div class="alert alert-info">Δεν υπάρχουν διαθέσιμα προγράμματα αυτή τη στιγμή.</div>`;
+                    }
+                    programsContainer.innerHTML = ''; // Καθαρισμός του container
+                    return;
+                }
                 
-                data.forEach(program => {
-                    const card = `
-                        <div class="col-md-6 col-lg-4 mb-4">
-                            <div class="card h-100">
-                                <div class="card-body d-flex flex-column ${program.type === 'group' ? 'bg-danger-subtle' : 'bg-success-subtle'}">
-                                    <h5 class="card-title"><em>${program.name}</em></h5>
-                                    <p class="card-text">${program.description}</p>
-                                    <p class="card-text"><small class="text-muted">Τύπος: <strong>${program.type === 'group' ? 'Ομαδικό' : 'Ατομικό'}</strong></small></p>
-                                    
-                                    <a href="booking.php?program_id=${program.id}" class="btn btn-primary mt-auto">Κάνε Κράτηση</a>
+                // Case 3: Η απάντηση είναι πίνακας με προγράμματα
+                if (Array.isArray(data)) {
+                    programsContainer.innerHTML = ''; // Καθαρισμός του container από τυχόν μήνυμα φόρτωσης
+                    data.forEach(program => {
+                        const card = `
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body d-flex flex-column ${program.type === 'group' ? 'bg-danger-subtle' : 'bg-success-subtle'}">
+                                        <h5 class="card-title"><em>${program.name}</em></h5>
+                                        <p class="card-text">${program.description}</p>
+                                        <p class="card-text"><small class="text-muted">Τύπος: <strong>${program.type === 'group' ? 'Ομαδικό' : 'Ατομικό'}</strong></small></p>
+                                        
+                                        <a href="booking.php?program_id=${program.id}" class="btn btn-primary mt-auto">Κάνε Κράτηση</a>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
-                    programsContainer.innerHTML += card;
-                });
+                        `;
+                        programsContainer.innerHTML += card;
+                    });
+                    if (messageArea) {
+                        messageArea.innerHTML = ''; // Καθαρισμός προηγούμενων μηνυμάτων
+                    }
+                } else {
+                // Case 4: Μη αναμενόμενη μορφή δεδομένων
+                    console.error("Unexpected data format for programs:", data);
+                    if (messageArea) {
+                        messageArea.innerHTML = `<div class="alert alert-danger">Μη αναμενόμενη απάντηση από τον server.</div>`;
+                    }
+                    programsContainer.innerHTML = ''; // Καθαρισμός του container
+                }
             })
             .catch(error => {
                 console.error('Error fetching programs:', error);
-                messageArea.innerHTML = `<div class="alert alert-danger">Αδυναμία φόρτωσης των προγραμμάτων.</div>`;
+                if (messageArea) {
+                    messageArea.innerHTML = `<div class="alert alert-danger">Αδυναμία φόρτωσης των προγραμμάτων: ${error.message || 'Προέκυψε σφάλμα'}.</div>`;
+                }
+                programsContainer.innerHTML = ''; // Καθαρισμός του container σε περίπτωση σφάλματος
             });
     }
 
@@ -571,14 +538,18 @@ document.addEventListener('DOMContentLoaded', function() {
             datePicker.disabled = true;
         } else {
             // Φόρτωση του ονόματος του προγράμματος
-            fetch(`${apiBaseUrl}/programs/read_one.php?id=${programId}`)
-                .then(res => res.json())
+            // Η apiFetch θα στείλει το token αν υπάρχει, αλλά για read_one προγράμματος μπορεί να μην είναι απαραίτητο.
+            // Αν το endpoint είναι δημόσιο, η apiFetch θα λειτουργήσει κανονικά.
+            apiFetch(`${apiBaseUrl}/programs/read_one.php?id=${programId}`)
                 .then(data => {
                     if (data.name) {
                         programTitleEl.textContent = `Κράτηση για: ${data.name}`;
                     } else {
-                        programTitleEl.textContent = 'Το πρόγραμμα δεν βρέθηκε.';
+                        programTitleEl.textContent = data.message || 'Το πρόγραμμα δεν βρέθηκε.';
                     }
+                })
+                .catch(error => {
+                    programTitleEl.textContent = `Σφάλμα: ${error.message || 'Δεν ήταν δυνατή η φόρτωση του προγράμματος.'}`;
                 });
         }
         
@@ -593,20 +564,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- Συνάρτηση για φόρτωση διαθεσιμότητας ---
         function fetchAvailability(pId, date) {
             availabilityResults.innerHTML = `<p class="text-center">Αναζήτηση διαθεσιμότητας...</p>`;
-            fetch(`${apiBaseUrl}/events/search.php?program_id=${pId}&date=${date}`, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(res => res.json())
+            // Η apiFetch θα προσθέσει αυτόματα το Authorization header
+            apiFetch(`${apiBaseUrl}/events/search.php?program_id=${pId}&date=${date}`)
             .then(data => {
                 availabilityResults.innerHTML = ''; // Καθαρισμός
-                if (data.message) {
+                if (data && data.message && !Array.isArray(data)) { // Αν είναι μήνυμα, π.χ. "Δεν βρέθηκαν events"
                     availabilityResults.innerHTML = `<p class="text-center text-warning">${data.message}</p>`;
-                } else {
+                } else if (Array.isArray(data) && data.length === 0) { // Αν είναι κενός πίνακας
+                    availabilityResults.innerHTML = `<p class="text-center text-info">Δεν υπάρχει διαθεσιμότητα για την επιλεγμένη ημερομηνία.</p>`;
+                } else if (Array.isArray(data)) { // Αν έχουμε δεδομένα
                     data.forEach(slot => {
                         const startTime = new Date(slot.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                         const item = `
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="list-group-item d-flex justify-content-between align-items-center mb-2">
                                 <div>
                                     <strong>Ώρα:</strong> ${startTime} | 
                                     <strong>Διαθέσιμες Θέσεις:</strong> ${slot.available_slots}
@@ -616,11 +586,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         `;
                         availabilityResults.innerHTML += item;
                     });
+                } else {
+                    availabilityResults.innerHTML = `<p class="text-center text-warning">Μη αναμενόμενη απάντηση από τον server.</p>`;
+                    console.error("Unexpected data format for availability:", data);
                 }
             })
-            .catch(err => {
-                console.error(err);
-                availabilityResults.innerHTML = `<p class="text-center text-danger">Σφάλμα φόρτωσης διαθεσιμότητας.</p>`;
+            .catch(error => {
+                console.error('Error fetching availability:', error);
+                availabilityResults.innerHTML = `<p class="text-center text-danger">Σφάλμα φόρτωσης διαθεσιμότητας: ${error.message || 'Προέκυψε σφάλμα'}.</p>`;
             });
         }
         
@@ -636,27 +609,26 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // --- Συνάρτηση για δημιουργία κράτησης ---
         function createBooking(eId) {
-            fetch(`${apiBaseUrl}/bookings/create.php`, {
+            // Η apiFetch θα προσθέσει αυτόματα Content-Type και Authorization headers
+            apiFetch(`${apiBaseUrl}/bookings/create.php`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({ event_id: eId })
             })
-            .then(res => res.json().then(data => ({ status: res.status, body: data })))
-            .then(({ status, body }) => {
-                if (status === 201) {
-                    messageArea.innerHTML = `<div class="alert alert-success">${body.message}</div>`;
-                    // Ανανέωση της λίστας διαθεσιμότητας
+            // Η apiFetch επιστρέφει το body της επιτυχούς απάντησης (π.χ. 201)
+            .then(data => {
+                messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Η κράτηση δημιουργήθηκε επιτυχώς!'}</div>`;
+                // Ανανέωση της λίστας διαθεσιμότητας
+                if (programId && datePicker.value) {
                     fetchAvailability(programId, datePicker.value);
-                } else {
-                    messageArea.innerHTML = `<div class="alert alert-danger">${body.message}</div>`;
                 }
                 // Σβήσιμο του μηνύματος μετά από 5 δευτερόλεπτα
                 setTimeout(() => { messageArea.innerHTML = ''; }, 5000);
             })
-            .catch(err => console.error(err));
+            .catch(error => {
+                console.error('Error creating booking:', error);
+                messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα δημιουργίας κράτησης: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
+                setTimeout(() => { messageArea.innerHTML = ''; }, 5000);
+            });
         }
     }
 
@@ -787,38 +759,60 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- Φόρτωση χρηστών σε αναμονή ---
             function fetchPendingUsers() {
-                fetch(`${apiBaseUrl}/users/read_pending.php`, { headers: { 'Authorization': `Bearer ${token}` } })
-                    .then(res => res.json())
+                // Η apiFetch θα προσθέσει αυτόματα το Authorization header
+                apiFetch(`${apiBaseUrl}/users/read_pending.php`)
                     .then(data => {
                         pendingUsersTbody.innerHTML = '';
-                        if (data.message) {
+                        // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
+                        // ή αν είναι ένας κενός πίνακας.
+                        if (data && data.message && !Array.isArray(data)) {
                             pendingCountBadge.textContent = '0';
                             pendingUsersTbody.innerHTML = `<tr><td colspan="5" class="text-center">${data.message}</td></tr>`;
-                        } else {
+                        } else if (Array.isArray(data) && data.length === 0) {
+                            pendingCountBadge.textContent = '0';
+                            pendingUsersTbody.innerHTML = `<tr><td colspan="5" class="text-center">Δεν υπάρχουν χρήστες σε αναμονή έγκρισης.</td></tr>`;
+                        } else if (Array.isArray(data)) {
                             pendingCountBadge.textContent = data.length;
                             data.forEach(user => {
                                 const row = `<tr>
                                     <td>${user.username}</td>
                                     <td>${user.last_name} ${user.first_name}</td>
                                     <td>${user.email}</td>
-                                    <td>${new Date(user.request_date).toLocaleDateString('el-GR')}</td>
+                                    <td>${user.request_date ? new Date(user.request_date).toLocaleDateString('el-GR') : 'N/A'}</td>
                                     <td><button class="btn btn-success btn-sm approve-btn" data-user-id="${user.id}">Έγκριση</button></td>
                                 </tr>`;
                                 pendingUsersTbody.innerHTML += row;
                             });
+                        } else {
+                            pendingCountBadge.textContent = '0';
+                            pendingUsersTbody.innerHTML = `<tr><td colspan="5" class="text-center text-warning">Μη αναμενόμενη απάντηση από τον server.</td></tr>`;
+                            console.error("Unexpected data format for pending users:", data);
                         }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching pending users:', error);
+                        pendingCountBadge.textContent = '0';
+                        pendingUsersTbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Σφάλμα φόρτωσης χρηστών σε αναμονή: ${error.message || 'Προέκυψε σφάλμα'}</td></tr>`;
                     });
             }
 
             // --- Φόρτωση όλων των χρηστών (ΕΝΗΜΕΡΩΜΕΝΗ) ---
             function fetchAllUsers() {
-                 fetch(`${apiBaseUrl}/users/read.php`, { headers: { 'Authorization': `Bearer ${token}` } })
-                    .then(res => res.json())
+                //  fetch(`${apiBaseUrl}/users/read.php`, { headers: { 'Authorization': `Bearer ${token}` } })
+                //     .then(res => res.json())
+                // Η apiFetch θα προσθέσει αυτόματα το Authorization header
+                apiFetch(`${apiBaseUrl}/users/read.php`)
                     .then(data => {
                         allUsersTbody.innerHTML = '';
-                        if (data.message) {
+                        // if (data.message) {
+                        // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
+                        // ή αν είναι ένας κενός πίνακας.
+                        if (data && data.message && !Array.isArray(data)) {
                              allUsersTbody.innerHTML = `<tr><td colspan="6" class="text-center">${data.message}</td></tr>`;
-                        } else {
+                        // } else {
+                        } else if (Array.isArray(data) && data.length === 0) {
+                            allUsersTbody.innerHTML = `<tr><td colspan="6" class="text-center">Δεν βρέθηκαν εγγεγραμμένοι χρήστες.</td></tr>`;
+                        } else if (Array.isArray(data)) {
                             data.forEach(user => {
                                 const roleBadge = user.role_name ? `<span class="badge bg-info">${user.role_name}</span>` : '<span class="badge bg-secondary">unregistered_user</span>';
                                 // const statusBadge = user.status === 'active' ? '<span class="badge bg-success">Ενεργός</span>' : '<span class="badge bg-secondary">Ανενεργός</span>';
@@ -854,10 +848,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </tr>`;
                                 allUsersTbody.innerHTML += row;
                             });
-                            // Αρχικοποίηση των tooltips
-                            const tooltipTriggerList = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')];
+                            // // Αρχικοποίηση των tooltips
+                            // const tooltipTriggerList = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')];
+                            // Αρχικοποίηση των tooltips μόνο για τα στοιχεία μέσα στο allUsersTbody
+                            const tooltipTriggerList = [...allUsersTbody.querySelectorAll('[data-bs-toggle="tooltip"]')];
                             tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+                        } else {
+                            allUsersTbody.innerHTML = `<tr><td colspan="6" class="text-center text-warning">Μη αναμενόμενη απάντηση από τον server.</td></tr>`;
+                            console.error("Unexpected data format for all users:", data);
                         }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching all users:', error);
+                        allUsersTbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Σφάλμα φόρτωσης χρηστών: ${error.message || 'Προέκυψε σφάλμα'}</td></tr>`;
                     });
             }
 
@@ -870,11 +873,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!userId) return; // Αν δεν υπάρχει ID, σταματάμε την εκτέλεση
                 if (targetLink.classList.contains('edit-btn')) {
 
-                    // Κλήση στο νέο endpoint για να πάρουμε τα τρέχοντα δεδομένα του χρήστη
-                    fetch(`${apiBaseUrl}/users/read_one_admin.php?id=${userId}`, {
-                         headers: { 'Authorization': `Bearer ${token}` }
-                    })
-                    .then(res => res.json())
+                    // Χρήση της apiFetch για να πάρουμε τα τρέχοντα δεδομένα του χρήστη
+                    apiFetch(`${apiBaseUrl}/users/read_one_admin.php?id=${userId}`)
                     .then(data => {
                         if(data.id) {
                             // Γέμισμα της φόρμας του modal
@@ -894,6 +894,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.getElementById('user-password').value = ''; // Πάντα κενό για ασφάλεια
                             userModal.show();
                         }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching user details for edit:', error);
+                        messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα φόρτωσης στοιχείων χρήστη: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
                     });
                 } else if (targetLink.classList.contains('delete-btn')) {
                     if(confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον χρήστη; Η ενέργεια είναι μη αναστρέψιμη.')){
@@ -904,30 +908,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Συνάρτηση για έγκριση χρήστη
             function approveUser(userId) {
-                fetch(`${apiBaseUrl}/users/approve.php`, {
+                apiFetch(`${apiBaseUrl}/users/approve.php`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ user_id: userId, role_id: 2 }) // Εγκρίνουμε πάντα ως registered_user (ID=2)
                 })
-                .then(res => res.json().then(data => ({ status: res.status, body: data })))
-                .then(({ status, body }) => {
-                    messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+                .then(data => { // Η apiFetch επιστρέφει το body της επιτυχούς απάντησης
+                    messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Ο χρήστης εγκρίθηκε επιτυχώς.'}</div>`;
                     fetchAllUsers();
                     fetchPendingUsers();
+                    setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                })
+                .catch(error => {
+                    console.error('Error approving user:', error);
+                    messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα έγκρισης χρήστη: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
                     setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
                 });
             }
             
             function deleteUser(id) {
-                fetch(`${apiBaseUrl}/users/delete.php`, {
+                apiFetch(`${apiBaseUrl}/users/delete.php`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ id: id })
                 })
-                .then(res => res.json().then(data => ({status: res.status, body: data})))
-                .then(({status, body}) => {
-                    messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+                .then(data => { // Η apiFetch επιστρέφει το body της επιτυχούς απάντησης (ή τίποτα για 204)
+                    messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Ο χρήστης διαγράφηκε επιτυχώς.'}</div>`;
                     fetchAllUsers();
+                    setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                })
+                .catch(error => {
+                    console.error('Error deleting user:', error);
+                    messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα διαγραφής χρήστη: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
+                    setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
                 });
             }
 
@@ -959,16 +970,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
 
                 // Ελέγχουμε αν το ID υπάρχει για να αποφασίσουμε αν είναι ενημέρωση ή δημιουργία
-                fetch(`${apiBaseUrl}/users/update.php`, {
+                // Η apiFetch θα προσθέσει αυτόματα Content-Type και Authorization headers
+                apiFetch(`${apiBaseUrl}/users/update.php`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(formData)
                 })
-                .then(res => res.json())
                 .then(data => {
-                    messageArea.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                    messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Τα στοιχεία χρήστη ενημερώθηκαν επιτυχώς.'}</div>`;
                     userModal.hide();
                     fetchAllUsers();
+                    setTimeout(() => messageArea.innerHTML = '', 4000);
+                })
+                .catch(error => {
+                    console.error('Error updating user:', error);
+                    messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα ενημέρωσης χρήστη: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
                     setTimeout(() => messageArea.innerHTML = '', 4000);
                 });
             });
@@ -999,31 +1014,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Φόρτωση των προγραμμάτων
         function fetchAdminPrograms() {
-            fetch(`${apiBaseUrl}/programs/read_admin.php`, { headers: { 'Authorization': `Bearer ${token}` } })
-                .then(res => res.json())
+            apiFetch(`${apiBaseUrl}/programs/read_admin.php`)
                 .then(data => {
                     programsTbody.innerHTML = '';
-                    data.forEach(p => {
-                        const programName = p.is_active ? `${p.name}` : `<span class="text-muted" style="opacity: 0.5"><em>${p.name}</em></span>`;
-                        const statusBadge = p.is_active ? 'Ενεργό' : '<span class="badge bg-secondary" style="opacity: 0.5"><em>Ανενεργό</em></span>';
-                        const programType = p.type === 'group' ? '<span class="badge bg-danger">Ομαδικό</span>' : '<span class="badge bg-success">Ατομικό</span>';
-                        const progranTypeFormatted = p.is_active ? programType : `<span class="text-muted" style="opacity: 0.5"><em>${programType}</em></span>`;
-                        const row = `<tr>
-                            
-                            <td>${programName}</td>
-                            <td>${progranTypeFormatted}</td>
-                            <td>${statusBadge}</td>
-                            <td>
-                                
+                    
+                    if (data && data.message && !Array.isArray(data)) {
+                        programsTbody.innerHTML = `<tr><td colspan="4" class="text-center">${data.message}</td></tr>`;
+                    } else if (Array.isArray(data) && data.length === 0) {
+                        programsTbody.innerHTML = `<tr><td colspan="4" class="text-center">Δεν βρέθηκαν προγράμματα.</td></tr>`;
+                    } else if (Array.isArray(data)) {
+                        data.forEach(p => {
+                            const programName = p.is_active ? `${p.name}` : `<span class="text-muted" style="opacity: 0.5"><em>${p.name}</em></span>`;
+                            const statusBadge = p.is_active ? 'Ενεργό' : '<span class="badge bg-secondary" style="opacity: 0.5"><em>Ανενεργό</em></span>';
+                            const programType = p.type === 'group' ? '<span class="badge bg-danger">Ομαδικό</span>' : '<span class="badge bg-success">Ατομικό</span>';
+                            const progranTypeFormatted = p.is_active ? programType : `<span class="text-muted" style="opacity: 0.5"><em>${programType}</em></span>`;
+                            const row = `<tr>
+                    
+                                <td>${programName}</td>
+                                <td>${progranTypeFormatted}</td>
+                                <td>${statusBadge}</td>
+                                <td>                   
+                    
                                 <a href="#" class="edit-btn me-2" data-id="${p.id}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="18"></a>
-                                ${p.is_active ? `<a href="#" class="disable-btn me-2" data-id="${p.id}" data-bs-toggle="tooltip" data-bs-title="Απενεργοποίηση"><img src="icons/disable.png" alt="Απενεργοποίηση" width="18"></a>` : ''}
-                            </td>
-                        </tr>`;
-                        programsTbody.innerHTML += row;
-                    });
-                    // Ενεργοποίηση tooltip για τα εικονίδια
-                    const tooltipTriggerList = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')];
-                    tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+                                    ${p.is_active ? `<a href="#" class="disable-btn me-2" data-id="${p.id}" data-bs-toggle="tooltip" data-bs-title="Απενεργοποίηση"><img src="icons/disable.png" alt="Απενεργοποίηση" width="18"></a>` : ''}
+                                </td>
+                            </tr>`;
+                            programsTbody.innerHTML += row;
+                        });
+                        // Ενεργοποίηση tooltip για τα εικονίδια μόνο εντός του programsTbody
+                        const tooltipTriggerList = [...programsTbody.querySelectorAll('[data-bs-toggle="tooltip"]')];
+                        tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+                    } else {
+                        programsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-warning">Μη αναμενόμενη απάντηση από τον server.</td></tr>`;
+                        console.error("Unexpected data format for admin programs:", data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching admin programs:', error);
+                    programsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Σφάλμα φόρτωσης προγραμμάτων: ${error.message || 'Προέκυψε σφάλμα'}</td></tr>`;
                 });
         }
         
@@ -1044,34 +1072,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (targetLink.classList.contains('edit-btn')) {
                 // Φόρτωση δεδομένων για επεξεργασία
-                fetch(`${apiBaseUrl}/programs/read_one.php?id=${id}`, { headers: { 'Authorization': `Bearer ${token}` } })
-                    .then(res => res.json())
+                apiFetch(`${apiBaseUrl}/programs/read_one.php?id=${id}`)
                     .then(p => {
-                        document.getElementById('program-id').value = p.id;
-                        document.getElementById('program-name').value = p.name;
-                        document.getElementById('program-description').value = p.description;
-                        document.getElementById('program-type').value = p.type;
-                        document.getElementById('program-is-active').checked = p.is_active == 1; // == 1 για σωστή απόδοση του boolean
-                        document.getElementById('status-wrapper').style.display = 'block';
-                        document.getElementById('modal-title').textContent = 'Επεξεργασία Προγράμματος';
-                        programModal.show();
+                        if (p && p.id) {
+                            document.getElementById('program-id').value = p.id;
+                            document.getElementById('program-name').value = p.name;
+                            document.getElementById('program-description').value = p.description;
+                            document.getElementById('program-type').value = p.type;
+                            document.getElementById('program-is-active').checked = p.is_active == 1; // == 1 για σωστή απόδοση του boolean
+                            document.getElementById('status-wrapper').style.display = 'block';
+                            document.getElementById('modal-title').textContent = 'Επεξεργασία Προγράμματος';
+                            programModal.show();
+                        } else {
+                            messageArea.innerHTML = `<div class="alert alert-warning">${(p && p.message) || 'Δεν βρέθηκε το πρόγραμμα ή τα δεδομένα είναι ελλιπή.'}</div>`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching program details for edit:', error);
+                        messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα φόρτωσης λεπτομερειών: ${error.message || 'Άγνωστο σφάλμα.'}</div>`;
                     });
             } else if (targetLink.classList.contains('disable-btn')) {
-                // Επιβεβαίωση διαγραφής
+                // Επιβεβαίωση απενεργοποίησης
                 if (confirm('Είστε σίγουροι ότι θέλετε να απενεργοποιήσετε αυτό το πρόγραμμα;')) {
-                    fetch(`${apiBaseUrl}/programs/disable.php`, {
+                    apiFetch(`${apiBaseUrl}/programs/disable.php`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
                         body: JSON.stringify({ id: id })
                     })
-                    .then(res => res.json().then(data => ({ status: res.status, body: data })))
-                    .then(({ status, body }) => {
-                         messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+                    .then(data => {
+                         messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Το πρόγραμμα απενεργοποιήθηκε επιτυχώς.'}</div>`;
                          fetchAdminPrograms(); // Ανανέωση της λίστας
                          setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                    })
+                    .catch(error => {
+                        console.error('Error disabling program:', error);
+                        messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα απενεργοποίησης: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
+                        setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
                     });
                 }
             }
@@ -1084,24 +1119,41 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = id ? `${apiBaseUrl}/programs/update.php` : `${apiBaseUrl}/programs/create.php`;
             
             const formData = {
-                id: id || undefined,
+                id: id || undefined, // Στέλνουμε id μόνο αν υπάρχει (για update)
                 name: document.getElementById('program-name').value,
                 description: document.getElementById('program-description').value,
                 type: document.getElementById('program-type').value,
-                is_active: document.getElementById('program-is-active').checked
+                is_active: id ? document.getElementById('program-is-active').checked : true // Για νέα προγράμματα, default σε active
             };
 
-            fetch(url, {
+            apiFetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(formData)
             })
-            .then(res => res.json())
             .then(data => {
-                messageArea.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Τα στοιχεία αποθηκεύτηκαν επιτυχώς.'}</div>`;
                 programModal.hide();
                 fetchAdminPrograms();
                 setTimeout(() => messageArea.innerHTML = '', 4000);
+            })
+            .catch(error => {
+                console.error('Error saving program:', error);
+                // Εμφάνιση σφαλμάτων validation αν υπάρχουν
+                if (error && error.errors) {
+                    let errorMessage = error.message || 'Παρακαλώ διορθώστε τα παρακάτω σφάλματα:';
+                    let errorsList = '<ul>';
+                    for (const field in error.errors) {
+                        errorsList += `<li>${error.errors[field]}</li>`;
+                        const inputElement = document.getElementById(`program-${field.replace('_', '-')}`);
+                        if (inputElement) {
+                            inputElement.classList.add('is-invalid');
+                        }
+                    }
+                    errorsList += '</ul>';
+                    messageArea.innerHTML = `<div class="alert alert-danger">${errorMessage}${errorsList}</div>`;
+                } else {
+                    messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
+                }
             });
         });
 
@@ -1130,35 +1182,50 @@ document.addEventListener('DOMContentLoaded', function() {
         const eventModal = new bootstrap.Modal(document.getElementById('event-modal'));
         const eventForm = document.getElementById('event-form');
         const toggleSwitch = document.getElementById('toggle-individual-programs');
+        const messageAreaSchedule = document.getElementById('message-area-schedule'); // Προσθήκη message area για αυτή την ενότητα
 
         // --- State Variable ---
         // Μεταβλητή που θα κρατάει τα δεδομένα της εβδομάδας για να μην κάνουμε συνέχεια API calls
         let currentScheduleData = [];
 
         // --- Functions ---
-        
+
         function populateFormDropdowns() {
             const programSelect = document.getElementById('event-program');
             const trainerSelect = document.getElementById('event-trainer');
-            
-            // Φόρτωση προγραμμάτων (μόνο τα ενεργά, ομαδικά)
-            fetch(`${apiBaseUrl}/programs/read_admin.php`, { headers: { 'Authorization': `Bearer ${token}` } })
-                .then(res => res.json())
+
+            // Φόρτωση προγραμμάτων (μόνο τα ενεργά)
+            apiFetch(`${apiBaseUrl}/programs/read_admin.php`) // Δεν χρειάζεται token header, η apiFetch το χειρίζεται
                 .then(data => {
-                    programSelect.innerHTML = '<option value="">Επιλέξτε...</option>';
-                    data.filter(p => p.is_active && p.type === 'group').forEach(p => {
-                        programSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-                    });
+                    programSelect.innerHTML = '<option value="">Επιλέξτε Πρόγραμμα...</option>';
+                    if (Array.isArray(data)) {
+                        data.filter(p => p.is_active).forEach(p => { // Φιλτράρισμα για ενεργά προγράμματα
+                            programSelect.innerHTML += `<option value="${p.id}" data-type="${p.type}">${p.name} (${p.type === 'group' ? 'Ομαδικό' : 'Ατομικό'})</option>`;
+                        });
+                    } else if (data && data.message) {
+                        programSelect.innerHTML = `<option value="">${data.message}</option>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching programs for dropdown:', error);
+                    programSelect.innerHTML = '<option value="">Σφάλμα φόρτωσης προγραμμάτων</option>';
                 });
-                
+
             // Φόρτωση γυμναστών
-            fetch(`${apiBaseUrl}/trainers/read.php`)
-                .then(res => res.json())
+            apiFetch(`${apiBaseUrl}/trainers/read.php`) // Δημόσιο endpoint, η apiFetch δεν θα στείλει token αν δεν υπάρχει
                 .then(data => {
-                    trainerSelect.innerHTML = '<option value="">Κανένας</option>';
-                    data.forEach(t => {
-                        trainerSelect.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`;
-                    });
+                    trainerSelect.innerHTML = '<option value="">Επιλέξτε Γυμναστή (Προαιρετικό)</option>';
+                    if (Array.isArray(data)) {
+                        data.forEach(t => {
+                            trainerSelect.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`;
+                        });
+                    } else if (data && data.message) {
+                        trainerSelect.innerHTML = `<option value="">${data.message}</option>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching trainers for dropdown:', error);
+                    trainerSelect.innerHTML = '<option value="">Σφάλμα φόρτωσης γυμναστών</option>';
                 });
         }
         
@@ -1177,14 +1244,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         function fetchSchedule(start, end) {
-            scheduleContainer.innerHTML = `<p class="text-center">Φόρτωση προγράμματος...</p>`;
-            fetch(`${apiBaseUrl}/events/read_admin.php?start=${start}&end=${end}`, { headers: { 'Authorization': `Bearer ${token}` } })
-                .then(res => res.json())
+            scheduleContainer.innerHTML = `<p class="text-center">Φόρτωση χρονοπρογραμματισμού...</p>`;
+            apiFetch(`${apiBaseUrl}/events/read_admin.php?start=${start}&end=${end}`) // Δεν χρειάζεται token header
                 .then(data => {
-                    // Αποθηκεύουμε τα δεδομένα στην state variable
-                    currentScheduleData = data.message ? [] : data;
-                    // Καλουμε τη render για να τα εμφανίσει
-                    renderSchedule();
+                    if (data && data.message && !Array.isArray(data)) {
+                        currentScheduleData = []; // Αν υπάρχει μήνυμα, δεν υπάρχουν events
+                        scheduleContainer.innerHTML = `<p class="text-center text-muted">${data.message}</p>`;
+                    } else if (Array.isArray(data)) {
+                        currentScheduleData = data;
+                        renderSchedule(); // Καλούμε τη render για να τα εμφανίσει
+                    } else {
+                        currentScheduleData = [];
+                        scheduleContainer.innerHTML = `<p class="text-center text-warning">Μη αναμενόμενη απάντηση από τον server.</p>`;
+                        console.error("Unexpected data format for schedule:", data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching schedule:', error);
+                    currentScheduleData = [];
+                    scheduleContainer.innerHTML = `<p class="text-center text-danger">Σφάλμα φόρτωσης χρονοπρογραμματισμού: ${error.message || 'Προέκυψε σφάλμα'}</p>`;
                 });
         }        
 
@@ -1221,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     eventsByDay[i].forEach(event => {
                         const programTypeDisplay = event.program_type === 'group' ? 'Ομαδικό' : 'Ατομικό';
                         const title = `${event.program_name} (${programTypeDisplay})`;
-                        const capacityText = event.max_capacity === null ? 'Απεριόριστες' : event.max_capacity;
+                        const capacityText = event.max_capacity === null || event.max_capacity === 0 ? 'Απεριόριστες' : event.max_capacity; // Ενημέρωση για null ή 0
                         const cardColorClass = event.program_type === 'group' ? 'bg-danger-subtle' : 'bg-success-subtle';
                         
                         // **ΝΕΑ ΛΟΓΙΚΗ: Δημιουργία λίστας συμμετεχόντων**
@@ -1265,6 +1343,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('add-event-btn').addEventListener('click', () => {
             eventForm.reset();
             document.getElementById('modal-title').textContent = 'Προσθήκη Event';
+            // Αυτόματη επιλογή της τρέχουσας Δευτέρας της επιλεγμένης εβδομάδας στο date picker του modal
+            const weekDates = getWeekDates(weekPicker.value);
+            document.getElementById('event-date').value = weekDates.start;
             eventModal.show();
         });
 
@@ -1279,24 +1360,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
         eventForm.addEventListener('submit', e => {
             e.preventDefault();
+            const programSelect = document.getElementById('event-program');
+            const selectedOption = programSelect.options[programSelect.selectedIndex];
+            const programType = selectedOption.getAttribute('data-type');
+
             const formData = {
                 program_id: document.getElementById('event-program').value,
-                trainer_id: document.getElementById('event-trainer').value,
+                trainer_id: document.getElementById('event-trainer').value || null, // null αν δεν επιλεγεί
                 start_time: `${document.getElementById('event-date').value} ${document.getElementById('event-start-time').value}`,
                 end_time: `${document.getElementById('event-date').value} ${document.getElementById('event-end-time').value}`,
-                max_capacity: document.getElementById('event-capacity').value,
+                // Αν είναι ατομικό, η χωρητικότητα είναι πάντα 1, αλλιώς παίρνει την τιμή από το πεδίο ή null (απεριόριστες)
+                max_capacity: programType === 'individual' ? 1 : (document.getElementById('event-capacity').value || null),
             };
-            fetch(`${apiBaseUrl}/events/create.php`, {
+
+            apiFetch(`${apiBaseUrl}/events/create.php`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(formData)
-            }).then(res => {
-                if (res.ok) {
-                    eventModal.hide();
-                    const weekDates = getWeekDates(weekPicker.value);
-                    fetchSchedule(weekDates.start, weekDates.end);
+            })
+            .then(data => {
+                if (messageAreaSchedule) {
+                    messageAreaSchedule.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Το event δημιουργήθηκε επιτυχώς.'}</div>`;
+                    setTimeout(() => { messageAreaSchedule.innerHTML = ''; }, 4000);
                 } else {
-                    alert('Σφάλμα κατά τη δημιουργία του event.');
+                    alert((data && data.message) || 'Το event δημιουργήθηκε επιτυχώς.');
+                }
+                eventModal.hide();
+                const weekDates = getWeekDates(weekPicker.value);
+                fetchSchedule(weekDates.start, weekDates.end);
+            })
+            .catch(error => {
+                console.error('Error creating event:', error);
+                if (messageAreaSchedule) {
+                    messageAreaSchedule.innerHTML = `<div class="alert alert-danger">Σφάλμα δημιουργίας event: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
+                     setTimeout(() => { messageAreaSchedule.innerHTML = ''; }, 4000);
+                } else {
+                    alert(`Σφάλμα κατά τη δημιουργία του event: ${error.message || 'Προέκυψε σφάλμα.'}`);
                 }
             });
         });
@@ -1305,16 +1403,27 @@ document.addEventListener('DOMContentLoaded', function() {
             if(e.target.classList.contains('delete-event-btn')) {
                 const eventId = e.target.getAttribute('data-id');
                 if(confirm('Είστε σίγουροι; Αυτή η ενέργεια θα διαγράψει και τις υπάρχουσες κρατήσεις για το event.')) {
-                    fetch(`${apiBaseUrl}/events/delete.php`, {
+                    apiFetch(`${apiBaseUrl}/events/delete.php`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                         body: JSON.stringify({id: eventId})
-                    }).then(res => {
-                        if (res.ok) {
+                    })
+                    .then(data => {
+                        if (messageAreaSchedule) {
+                            messageAreaSchedule.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Το event διαγράφηκε επιτυχώς.'}</div>`;
+                            setTimeout(() => { messageAreaSchedule.innerHTML = ''; }, 4000);
+                        } else {
+                            alert((data && data.message) || 'Το event διαγράφηκε επιτυχώς.');
+                        }
                            const weekDates = getWeekDates(weekPicker.value);
                            fetchSchedule(weekDates.start, weekDates.end);
+                    })
+                    .catch(error => {
+                        console.error('Error deleting event:', error);
+                        if (messageAreaSchedule) {
+                            messageAreaSchedule.innerHTML = `<div class="alert alert-danger">Σφάλμα διαγραφής event: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
+                            setTimeout(() => { messageAreaSchedule.innerHTML = ''; }, 4000);
                         } else {
-                           alert('Σφάλμα κατά τη διαγραφή του event.');
+                           alert(`Σφάλμα κατά τη διαγραφή του event: ${error.message || 'Προέκυψε σφάλμα.'}`);
                         }
                     });
                 }
@@ -1342,14 +1451,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // =================================================================
-    // 10. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΑΝΑΚΟΙΝΩΣΕΩΝ (ADMIN)
+    // 10. ΛΟΓΙΚΗ ΣΕΛΙΔΑΣ ΔΙΑΧΕΙΡΙΣΗΣ ΑΝΑΚΟΙΝΩΣΕΩΝ (ADMIN) - (ΑΝΑΒΑΘΜΙΣΜΕΝΟ ΜΕ apiFetch)
     // =================================================================
-    if (document.getElementById('admin-announcements-page-identifier')) {
+    if (document.getElementById('admin-announcements-page-identifier')) {        
         const token = localStorage.getItem('jwt');
         if (!token || parseJwt(token).data.role_id !== 1) {
             window.location.href = 'index.php';
             return;
         }
+
 
         const announcementsTbody = document.getElementById('announcements-tbody');
         const messageArea = document.getElementById('message-area');
@@ -1357,28 +1467,39 @@ document.addEventListener('DOMContentLoaded', function() {
         const announcementForm = document.getElementById('announcement-form');
 
         function fetchAnnouncements() {
+            // Χρήση της apiFetch. Δεν χρειάζεται πλέον να περνάμε το header του token.
             // Το endpoint /read.php είναι δημόσιο, αλλά εδώ το καλούμε για να πάρουμε τη λίστα για διαχείριση.
-            fetch(`${apiBaseUrl}/announcements/read.php`, { headers: { 'Authorization': `Bearer ${token}` }})
-                .then(res => res.json())
+            // Η apiFetch θα στείλει το token αν υπάρχει, το οποίο μπορεί να χρησιμοποιηθεί από το API για να επιστρέψει π.χ. και μη δημοσιευμένες.
+            apiFetch(`${apiBaseUrl}/announcements/read.php`) 
                 .then(data => {
                     announcementsTbody.innerHTML = '';
-                    if (data.message) {
+                    if (data && data.message && !Array.isArray(data)) {
                         announcementsTbody.innerHTML = `<tr><td colspan="4" class="text-center">${data.message}</td></tr>`;
-                    } else {
+                    } else if (Array.isArray(data) && data.length === 0) {
+                        announcementsTbody.innerHTML = `<tr><td colspan="4" class="text-center">Δεν βρέθηκαν ανακοινώσεις.</td></tr>`;
+                    } else if (Array.isArray(data)) {
                         data.forEach(a => {
                             const row = `<tr>
                                 <td>${a.title}</td>
                                 <td>${a.author}</td>
                                 <td>${new Date(a.created_at).toLocaleDateString('el-GR')}</td>
                                 <td>
-                                    
                                     <a href="#" class="edit-btn me-2" data-id="${a.id}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="18"></a>
                                     <a href="#" class="delete-btn" data-id="${a.id}" data-bs-toggle="tooltip" data-bs-title="Διαγραφή"><img src="icons/bin.png" alt="Διαγραφή" width="18"></a>
                                 </td>
                             </tr>`;
                             announcementsTbody.innerHTML += row;
                         });
+                        const tooltipTriggerList = [...announcementsTbody.querySelectorAll('[data-bs-toggle="tooltip"]')];
+                        tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+                    } else {
+                        announcementsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-warning">Μη αναμενόμενη απάντηση.</td></tr>`;
+                        console.error("Unexpected data format for announcements:", data);
                     }
+                })
+                .catch(error => {
+                    console.error('Error fetching announcements:', error);
+                    announcementsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Σφάλμα φόρτωσης: ${error.message || 'Προέκυψε σφάλμα'}</td></tr>`;
                 });
         }
         
@@ -1395,11 +1516,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = targetLink.getAttribute('data-id');
 
             if (targetLink.classList.contains('edit-btn')) {
-                // Φόρτωση δεδομένων για επεξεργασία
-                fetch(`${apiBaseUrl}/announcements/read_one.php?id=${id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-                .then(res => res.json())
+                // **ΑΛΛΑΓΗ 2: Χρήση της apiFetch για την ανάκτηση μιας εγγραφής.**
+                apiFetch(`${apiBaseUrl}/announcements/read_one.php?id=${id}`) // Δεν χρειάζεται token header
                 .then(data => {
                     if(data.id) {
                         document.getElementById('announcement-id').value = data.id;
@@ -1407,22 +1525,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('announcement-content').value = data.content;
                         document.getElementById('modal-title').textContent = 'Επεξεργασία Ανακοίνωσης';
                         announcementModal.show();
+                    } else {
+                        messageArea.innerHTML = `<div class="alert alert-warning">${(data && data.message) || 'Δεν βρέθηκε η ανακοίνωση.'}</div>`;
                     }
+                })
+                .catch(error => {
+                    console.error('Error fetching announcement for edit:', error);
+                    messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα φόρτωσης: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
                 });
             } else if (targetLink.classList.contains('delete-btn')) {
                 if(confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε οριστικά αυτή την ανακοίνωση;')){
-                    fetch(`${apiBaseUrl}/announcements/delete.php`, {
+                    // **ΑΛΛΑΓΗ 3: Χρήση της apiFetch για τη διαγραφή.**
+                    apiFetch(`${apiBaseUrl}/announcements/delete.php`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
+                        // headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, // Δεν χρειάζεται
                         body: JSON.stringify({ id: id })
                     })
-                    .then(res => res.json().then(data => ({ status: res.status, body: data })))
-                    .then(({ status, body }) => {
-                        messageArea.innerHTML = `<div class="alert ${status === 200 ? 'alert-success' : 'alert-danger'}">${body.message}</div>`;
+                    .then(data => {
+                        messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Η ανακοίνωση διαγράφηκε επιτυχώς.'}</div>`;
                         fetchAnnouncements(); // Ανανέωση της λίστας
+                        setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                    })
+                    .catch(error => {
+                        console.error('Error deleting announcement:', error);
+                        messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα διαγραφής: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
                         setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
                     });
                 }
@@ -1440,20 +1566,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 content: document.getElementById('announcement-content').value
             };
             
-            fetch(url, {
+            // Χρήση της apiFetch για δημιουργία/ενημέρωση.
+            apiFetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                // headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, // Δεν χρειάζεται
                 body: JSON.stringify(formData)
             })
-            .then(res => res.json())
             .then(data => {
-                messageArea.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Η ανακοίνωση αποθηκεύτηκε επιτυχώς.'}</div>`;
                 announcementModal.hide();
                 fetchAnnouncements();
-                setTimeout(() => messageArea.innerHTML = '', 4000);
+                setTimeout(() => { messageArea.innerHTML = '', 4000);
+            })
+            .catch(error => {
+                console.error('Error saving announcement:', error);
+                if (error && error.errors) {
+                    let errorMessage = error.message || 'Παρακαλώ διορθώστε τα παρακάτω σφάλματα:';
+                    let errorsList = '<ul>';
+                    for (const field in error.errors) {
+                        errorsList += `<li>${error.errors[field]}</li>`;
+                         const inputElement = document.getElementById(`announcement-${field}`);
+                        if (inputElement) {
+                            inputElement.classList.add('is-invalid');
+                        }
+                    }
+                    errorsList += '</ul>';
+                    messageArea.innerHTML = `<div class="alert alert-danger">${errorMessage}${errorsList}</div>`;
+                } else {
+                    messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
+                }
             });
         });
         
+        // Αρχική φόρτωση
         fetchAnnouncements();
     }
 
@@ -1634,7 +1779,21 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error saving trainer:', error);
-                messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα αποθήκευσης: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
+                if (error && error.errors) {
+                    let errorMessage = error.message || 'Παρακαλώ διορθώστε τα παρακάτω σφάλματα:';
+                    let errorsList = '<ul>';
+                    for (const field in error.errors) {
+                        errorsList += `<li>${error.errors[field]}</li>`;
+                        const inputElement = document.getElementById(`trainer-${field.replace('_', '-')}`);
+                        if (inputElement) {
+                            inputElement.classList.add('is-invalid');
+                        }
+                    }
+                    errorsList += '</ul>';
+                    messageArea.innerHTML = `<div class="alert alert-danger">${errorMessage}${errorsList}</div>`;
+                } else {
+                    messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
+                }
             });
         });
         fetchTrainers();
