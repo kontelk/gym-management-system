@@ -35,6 +35,6 @@ define('JWT_ISSUER', 'http://localhost');
 // Το κοινό του token.
 define('JWT_AUDIENCE', 'http://localhost');
 
-// Διάρκεια ζωής του token σε δευτερόλεπτα (11 λεπτά).
+// Διάρκεια ζωής του token σε δευτερόλεπτα (10 λεπτά)
 define('JWT_EXP_SECONDS', 600);
 

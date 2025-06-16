@@ -1433,15 +1433,29 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- Αρχική Φόρτωση ---
         
         populateFormDropdowns();
+
+        const today = new Date();
+
+        // Βοηθητική συνάρτηση για τον υπολογισμό του έτους και του αριθμού εβδομάδας ISO 8601
+        function getISOWeekData(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            // Ημέρα της εβδομάδας κατά ISO-8601 (1-Δευτέρα..7-Κυριακή)
+            // Η getUTCDay() επιστρέφει 0 για Κυριακή, οπότε το (d.getUTCDay() || 7) κάνει την Κυριακή 7
+            const dayNum = d.getUTCDay() || 7;
+            // Μετακίνηση στην Πέμπτη της τρέχουσας εβδομάδας
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            // Έτος αυτής της Πέμπτης (αυτό είναι το έτος της εβδομάδας ISO)
+            const year = d.getUTCFullYear();
+            // 1η Ιανουαρίου του έτους της Πέμπτης
+            const yearStart = new Date(Date.UTC(year, 0, 1));
+            // Υπολογισμός του αριθμού εβδομάδας
+            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return { year: year, week: weekNo };
+        }
         
-        const now = new Date();
-        const firstDayOfWeek = new Date(now.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1)));
-        const year = firstDayOfWeek.getFullYear();
-        const d1 = new Date(year, 0, 1);
-        const days = Math.floor((firstDayOfWeek - d1) / (24 * 60 * 60 * 1000));
-        const week = Math.ceil((days + d1.getDay() + 1) / 7);
+        const { year: isoYear, week: isoWeek } = getISOWeekData(today);
         
-        const currentWeekString = `${year}-W${String(week).padStart(2, '0')}`;
+        const currentWeekString = `${isoYear}-W${String(isoWeek).padStart(2, '0')}`;
         weekPicker.value = currentWeekString;
 
         const weekDates = getWeekDates(weekPicker.value);
@@ -1576,7 +1590,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Η ανακοίνωση αποθηκεύτηκε επιτυχώς.'}</div>`;
                 announcementModal.hide();
                 fetchAnnouncements();
-                setTimeout(() => { messageArea.innerHTML = '', 4000);
+                setTimeout(() => { messageArea.innerHTML = '', 4000; });
             })
             .catch(error => {
                 console.error('Error saving announcement:', error);
