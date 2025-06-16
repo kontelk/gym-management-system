@@ -1,10 +1,38 @@
 /* Custom CSS styles will go here */
 body {
-    background-color: #f8f9fa;
+    background-color: #f8f9fa; /* Αυτό θα καλυφθεί από το carousel */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Εξασφαλίζει ότι το body είναι τουλάχιστον το ύψος της οθόνης */
+}
+
+/* Διασφάλιση ότι το navbar είναι πάντα ορατό */
+nav.navbar {
+    position: relative; /* Το Bootstrap το θέτει ήδη, αλλά για σιγουριά */
+    z-index: 1050;  /* Αρκετά υψηλό z-index για να είναι πάνω από τα περισσότερα στοιχεία */
 }
 
 main {
-    min-height: 80vh; /* Εξασφαλίζει ότι το footer μένει κάτω σε σελίδες με λίγο περιεχόμενο */
+    flex-grow: 1; /* Επιτρέπει στο main να καταλάβει τον διαθέσιμο χώρο */
+    display: flex; /* Κάνει το main flex container */
+    flex-direction: column; /* Τα παιδιά του main στοιχίζονται κάθετα */
+}
+
+/* Το div.container.mt-4 που ανοίγει στο header.php και κλείνει στο footer.php */
+/* Αυτό αντικαθιστά λειτουργικά το παλιό .page-content-wrapper για το περιεχόμενο της index.php */
+main > .container.mt-4 {
+    flex-grow: 1; /* Επιτρέπει σε αυτό το container να καταλάβει τον διαθέσιμο χώρο μέσα στο main */
+    display: flex;
+    flex-direction: column; /* Τα παιδιά του στοιχίζονται κάθετα (jumbotron, announcements) */
+    position: relative; /* Για stacking context του z-index */
+    z-index: 1; /* Για να είναι πάνω από το background carousel */
+}
+
+/* Στυλ για το jumbotron μέσα στο νέο container */
+main > .container.mt-4 .jumbotron hr.my-4 {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.5); /* Λευκή γραμμή, ελαφρώς αχνή */
+    opacity: 1; /* Επαναφορά opacity αν το Bootstrap το αλλάζει */
 }
 
 /* Styling για το κυκλικό χρονόμετρο JWT */
@@ -36,3 +64,65 @@ main {
 #jwt-timer-text {
   /* Στυλ για το κείμενο μέσα στον κύκλο */
 }
+
+    #backgroundCarousel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -2; /* Πίσω από το overlay και το περιεχόμενο */
+    }
+
+    #backgroundCarousel .carousel-inner,
+    #backgroundCarousel .carousel-item {
+        width: 100%;
+        height: 100%;
+    }
+
+    #backgroundCarousel .carousel-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Κάλυψη της περιοχής διατηρώντας την αναλογία */
+    }
+
+    #carousel-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5); /* Εφέ αχνής εμφάνισης */
+        z-index: -1; /* Πάνω από το carousel, πίσω από το περιεχόμενο */
+    }
+
+    /* Το z-index για το κύριο περιεχόμενο διαχειρίζεται πλέον το main > .container.mt-4 */
+    /* Οι παλιοί κανόνες για .jumbotron, .container.mt-5 για z-index δεν χρειάζονται πλέον εδώ */
+
+    /* Στοχεύει το .container.mt-5 (ανακοινώσεις) που είναι παιδί του main > .container.mt-4 */
+main > .container.mt-4 > .container.mt-5 {
+        margin-top: auto; /* Ωθεί τις ανακοινώσεις στο κάτω μέρος του main > .container.mt-4 */
+        padding-bottom: 2rem; /* Προσθήκη κενού χώρου πάνω από το footer */
+    }
+    /* Το χρώμα του τίτλου των ανακοινώσεων (h3) και του jumbotron (h1, p)
+       ελέγχεται από τις κλάσεις text-white στο index.php */
+
+/* Στυλ για τις κάρτες ανακοινώσεων στην αρχική σελίδα */
+#announcements-container .list-group-item {
+    background-color: rgba(108, 117, 125, 0.8); /* 80% διαφάνεια, βασισμένο στο secondary χρώμα του Bootstrap */
+    color: white; /* Λευκό χρώμα κειμένου για αντίθεση */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Διακριτικό λευκό περίγραμμα */
+    margin-bottom: 0.75rem !important; /* Εξασφάλιση του κάτω margin */
+}
+
+#announcements-container .list-group-item.list-group-item-action:hover,
+#announcements-container .list-group-item.list-group-item-action:focus {
+    background-color: rgba(108, 117, 125, 0.9); /* Ελαφρώς λιγότερο διαφανές στο hover/focus */
+    color: white; /* Διατήρηση λευκού χρώματος κειμένου */
+}
+
+    footer {
+        position: relative; /* Για να δημιουργηθεί stacking context αν χρειαστεί */
+        z-index: 1; /* Για να είναι πάνω από τα στοιχεία με αρνητικό z-index */
+        /* margin-top: auto;  Δεν χρειάζεται εδώ αν το main έχει flex-grow: 1 */
+    }

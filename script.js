@@ -1660,13 +1660,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     data.forEach(announcement => {
                         // **ΑΛΛΑΓΗ ΕΔΩ: Προσθέσαμε την κλάση 'bg-warning-subtle'** (Αυτή η γραμμή υπήρχε ήδη)
                         const item = `
-                            <div class="list-group-item list-group-item-action flex-column align-items-start mb-2 bg-warning-subtle">
+                            <div class="list-group-item list-group-item-action flex-column align-items-start mb-2">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1"><em>${announcement.title}</em></h5>
                                     <small>${new Date(announcement.created_at).toLocaleDateString('el-GR')}</small>
                                 </div>
                                 <p class="mb-1">${announcement.content}</p>
-                                <small>Από: ${announcement.author}</small>
                             </div>
                         `;
                         announcementsContainer.innerHTML += item;
