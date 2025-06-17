@@ -42,7 +42,7 @@ include 'templates/header.php';
         <div class="card shadow-sm">
             <div class="card-body p-4 p-lg-5">
                 <h2 class="text-center mb-4">Είσοδος Χρήστη</h2>
-                <form id="login-form">
+                <form id="login-form" method="POST" novalidate>
                     <div class="mb-3">
                         <label for="username" class="form-label">Όνομα Χρήστη</label>
                         <input type="text" class="form-control" id="username" name="username" required autocomplete="off">

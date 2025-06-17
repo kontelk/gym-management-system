@@ -12,7 +12,7 @@ include 'templates/header.php';
             <button class="nav-link active" id="all-users-tab" data-bs-toggle="tab" data-bs-target="#all-users" type="button" role="tab">Όλοι οι Χρήστες</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">Αιτήματα σε Αναμονή <span id="pending-count" class="badge bg-danger ms-1"></span></button>
+            <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">Αιτήματα Εγγραφής σε Αναμονή <span id="pending-count" class="badge bg-danger ms-1"></span></button>
         </li>
     </ul>
 

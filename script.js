@@ -779,7 +779,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <td>${user.last_name} ${user.first_name}</td>
                                     <td>${user.email}</td>
                                     <td>${user.request_date ? new Date(user.request_date).toLocaleDateString('el-GR') : 'N/A'}</td>
-                                    <td><button class="btn btn-success btn-sm approve-btn" data-user-id="${user.id}">Έγκριση</button></td>
+                                    <!-- Προσθήκη κουμπιών έγκρισης και απόρριψης -->
+                                    <td>
+                                        <a href="#" class="approve-btn me-2" data-id="${user.id}" data-username="${user.username}" data-bs-toggle="tooltip" data-bs-title="Έγκριση"><img src="icons/approve.png" alt="Έγκριση" width="25"></a>
+                                        <a href="#" class="decline-btn me-2" data-id="${user.id}" data-username="${user.username}" data-bs-toggle="tooltip" data-bs-title="Απόρριψη"><img src="icons/decline.png" alt="Απόρριψη" width="25"></a>
+                                    </td>
                                 </tr>`;
                                 pendingUsersTbody.innerHTML += row;
                             });
@@ -788,6 +792,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             pendingUsersTbody.innerHTML = `<tr><td colspan="5" class="text-center text-warning">Μη αναμενόμενη απάντηση από τον server.</td></tr>`;
                             console.error("Unexpected data format for pending users:", data);
                         }
+                        // Αρχικοποίηση των tooltips μόνο για τα στοιχεία μέσα στο pendingUsersTbody
+                        const tooltipTriggerList = [...pendingUsersTbody.querySelectorAll('[data-bs-toggle="tooltip"]')];
+                        tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
                     })
                     .catch(error => {
                         console.error('Error fetching pending users:', error);
@@ -814,8 +821,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             allUsersTbody.innerHTML = `<tr><td colspan="6" class="text-center">Δεν βρέθηκαν εγγεγραμμένοι χρήστες.</td></tr>`;
                         } else if (Array.isArray(data)) {
                             data.forEach(user => {
-                                const roleBadge = user.role_name ? `<span class="badge bg-info">${user.role_name}</span>` : '<span class="badge bg-secondary">unregistered_user</span>';
-                                // const statusBadge = user.status === 'active' ? '<span class="badge bg-success">Ενεργός</span>' : '<span class="badge bg-secondary">Ανενεργός</span>';
+                                let roleBadge = '';// = user.role_name ? `?<span class="badge bg-info">${user.role_name}</span>:` : '<span class="badge bg-secondary">unregistered_user</span>';
+                                if (user.role_name) {
+                                    if (user.role_name === 'admin') {
+                                        roleBadge = '<span class="badge bg-dark">admin</span>';
+                                    } else if (user.role_name === 'registered_user') {
+                                        roleBadge = '<span class="badge bg-primary">registered_user</span>';
+                                    }
+                                } else {
+                                    roleBadge = '';
+                                }
+                                
                                 let badgeClass;
                                 switch (user.status) {
                                 case 'active':
@@ -833,17 +849,22 @@ document.addEventListener('DOMContentLoaded', function() {
                                 default:
                                     badgeClass = 'bg-light text-dark'; // προεπιλογή
                                 }
+                                // const statusBadge = user.status === 'active' ? '<span class="badge bg-success">Ενεργός</span>' : '<span class="badge bg-secondary">Ανενεργός</span>';
                                 const statusBadge = `<span class="badge ${badgeClass}">${user.status}</span>`;
 
                                 const row = `<tr>
-                                    <td>${user.username}</td>
+                                    <!-- εαν user.status είναι rejected ή inactive τότε κάνε το χρώμα του κειμένου πολύ ανοιχτό πολύ θαμπό (περισσότερο από text-muted) -->
+                                     
+                                    <td class="${user.status === 'rejected' || user.status === 'inactive' ? 'text-muted' : ''}">${user.username}</td>
+                                    
+                                    
                                     <td>${user.last_name} ${user.first_name}</td>
                                     <td>${user.email}</td>
                                     <td>${roleBadge}</td>
                                     <td>${statusBadge}</td>
                                     <td>
-                                        <a href="#" class="edit-btn me-2" data-id="${user.id}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="18"></a>
-                                        <a href="#" class="delete-btn" data-id="${user.id}" data-bs-toggle="tooltip" data-bs-title="Διαγραφή"><img src="icons/bin.png" alt="Διαγραφή" width="18"></a>
+                                        <a href="#" class="edit-btn me-2" data-id="${user.id}" data-username="${user.username}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="25"></a>
+                                        <a href="#" class="delete-btn" data-id="${user.id}" data-username="${user.username}" data-bs-toggle="tooltip" data-bs-title="Διαγραφή"><img src="icons/bin.png" alt="Διαγραφή" width="25"></a>
                                     </td>
                                 </tr>`;
                                 allUsersTbody.innerHTML += row;
@@ -869,6 +890,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const targetLink = e.target.closest('a');
                 if (!targetLink) return;
                 const userId = targetLink.getAttribute('data-id');
+                const username = targetLink.getAttribute('data-username');
                 console.log(`User ID: ${userId}`); // Για debugging
                 if (!userId) return; // Αν δεν υπάρχει ID, σταματάμε την εκτέλεση
                 if (targetLink.classList.contains('edit-btn')) {
@@ -900,11 +922,29 @@ document.addEventListener('DOMContentLoaded', function() {
                         messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα φόρτωσης στοιχείων χρήστη: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
                     });
                 } else if (targetLink.classList.contains('delete-btn')) {
-                    if(confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον χρήστη; Η ενέργεια είναι μη αναστρέψιμη.')){
+                    if(confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε τον χρήστη [${username}]; Η ενέργεια είναι μη αναστρέψιμη.`)){
                         deleteUser(userId);
                     }
                 }
             });
+
+
+            // Event Listener για έγκριση ή απορριψη χρηστών σε αναμονή
+            pendingUsersTbody.addEventListener('click', function(e){
+                const targetLink = e.target.closest('a');
+                const userId = targetLink.getAttribute('data-id');
+                const username = targetLink.getAttribute('data-username');
+                if (targetLink.classList.contains('approve-btn')) {
+                    if(confirm(`Είστε σίγουροι ότι θέλετε να εγκρίνετε τον χρήστη [${username}];`)){
+                        approveUser(userId);
+                    }
+                } else if (targetLink.classList.contains('decline-btn')) {
+                    if(confirm(`Είστε σίγουροι ότι θέλετε να απορρίψετε τον χρήστη [${username}];`)){
+                        declineUser(userId);
+                    }
+                }
+            });
+
 
             // Συνάρτηση για έγκριση χρήστη
             function approveUser(userId) {
@@ -921,6 +961,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch(error => {
                     console.error('Error approving user:', error);
                     messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα έγκρισης χρήστη: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
+                    setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                });
+            }
+
+            // Συνάρτηση για την απορριψη χρήστη
+            function declineUser(userId) {
+                apiFetch(`${apiBaseUrl}/users/decline.php`, {
+                    method: 'POST',
+                    body: JSON.stringify({ user_id: userId}) // Εγκρίνουμε πάντα ως registered_user (ID=2)
+                })
+                .then(data => { // Η apiFetch επιστρέφει το body της επιτυχούς απάντησης
+                    messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Ο χρήστης απορρίφθηκε επιτυχώς.'}</div>`;
+                    fetchAllUsers();
+                    fetchPendingUsers();
+                    setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                })
+                .catch(error => {
+                    console.error('Error approving user:', error);
+                    messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα απόρριψης του χρήστη: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
                     setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
                 });
             }
@@ -942,15 +1001,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
 
-            // Event Listener για έγκριση
-            pendingUsersTbody.addEventListener('click', function(e){
-                if(e.target && e.target.classList.contains('approve-btn')){
-                    const userId = e.target.getAttribute('data-user-id');
-                    if(confirm(`Είστε σίγουροι ότι θέλετε να εγκρίνετε τον χρήστη με ID: ${userId};`)){
-                        approveUser(userId);
-                    }
-                }
-            });
+            
             
             // Άνοιγμα modal για νέο χρήστη
             userForm.addEventListener('submit', e => {

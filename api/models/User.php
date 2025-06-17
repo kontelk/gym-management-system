@@ -210,6 +210,36 @@ class User {
 
         return false;
     }
+
+
+
+    /**
+     * Απορρίπτει έναν χρήστη, αλλάζοντας το status του σε 'rejected'.
+     * @return bool True αν η ενημέρωση ήταν επιτυχής, αλλιώς false.
+     */
+    public function decline() {
+        $query = "UPDATE " . $this->table_name . "
+                  SET status = 'rejected', role_id = NULL
+                  WHERE id = :id AND status = 'pending_approval'";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Απολύμανση
+        $this->id = htmlspecialchars(strip_tags($this->id));
+
+        // Σύνδεση παραμέτρων
+        $stmt->bindParam(':id', $this->id);
+
+        if ($stmt->execute()) {
+            // Ελέγχουμε αν όντως έγινε η αλλαγή (αν υπήρχε χρήστης με αυτό το id και status)
+            if ($stmt->rowCount() > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     
 
     /**
@@ -220,6 +250,7 @@ class User {
         $query = "SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.status, r.role_name
                   FROM " . $this->table_name . " u
                   LEFT JOIN roles r ON u.role_id = r.id
+                  WHERE u.status != 'pending_approval'
                   ORDER BY u.created_at DESC";
         
         $stmt = $this->conn->prepare($query);
@@ -291,7 +322,6 @@ class User {
         $this->role_id = htmlspecialchars(strip_tags($this->role_id));
         $this->status = htmlspecialchars(strip_tags($this->status));
         $this->id = htmlspecialchars(strip_tags($this->id));
-
         // --- Σύνδεση (Binding) των Παραμέτρων ---
         $stmt->bindParam(':username', $this->username);
         $stmt->bindParam(':email', $this->email);
