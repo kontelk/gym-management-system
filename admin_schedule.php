@@ -65,7 +65,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="event-capacity" class="form-label">Μέγιστη Χωρητικότητα</label>
-                        <input type="number" class="form-control" id="event-capacity" min="1" required>
+                        <input type="number" class="form-control" id="event-capacity" min="1" value="20" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Αποθήκευση</button>
                 </form>
