@@ -48,8 +48,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!response.ok) {
                 // Χειρισμός άλλων HTTP σφαλμάτων (π.χ. 404, 500)
-                const errorData = await response.json().catch(() => ({ message: 'Άγνωστο σφάλμα server.' }));
-                return Promise.reject(errorData);
+                // Προσπάθεια να διαβάσουμε την απάντηση ως κείμενο πρώτα
+                const errorText = await response.text();
+                try {
+                    // Προσπάθεια να την κάνουμε parse ως JSON
+                    const errorData = JSON.parse(errorText);
+                    return Promise.reject(errorData);
+                } catch (e) {
+                    // Αν αποτύχει το parse, σημαίνει ότι δεν ήταν JSON (π.χ. HTML σφάλματος)
+                    console.error('Server returned non-JSON error:', errorText);
+                    return Promise.reject({ message: `Σφάλμα server: ${response.status} ${response.statusText}. Δείτε την κονσόλα για λεπτομέρειες.` });
+                }
             }
             
             // Για 204 No Content (π.χ. σε επιτυχημένη διαγραφή χωρίς σώμα απάντησης)
@@ -57,11 +66,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return Promise.resolve();
             }
 
-            return response.json(); // Επιστροφή των δεδομένων JSON
+            return response.json(); // Για 200 OK, 201 Created κ.λπ. επιστροφή των δεδομένων JSON
 
         } catch (error) {
-            console.error('Fetch Error:', error);
-            return Promise.reject(error);
+            console.error('Network or Fetch Error:', error);
+            return Promise.reject({ message: 'Σφάλμα δικτύου. Ελέγξτε τη σύνδεσή σας.' });
         }
     }
 
