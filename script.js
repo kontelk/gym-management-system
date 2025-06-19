@@ -1308,6 +1308,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Μεταβλητή που θα κρατάει τα δεδομένα της εβδομάδας για να μην κάνουμε συνέχεια API calls
         let currentScheduleData = [];
 
+        // Αντιστοίχιση IDs πεδίων με τα προεπιλεγμένα μηνύματα σφάλματος από το HTML
+        const defaultEventFormErrorMessages = {
+            'event-program': 'Επιλέξτε πρόγραμμα.',
+            'event-trainer': 'Επιλέξτε γυμναστή.',
+            'event-date': 'Επιλέξτε μια έγκυρη ημερομηνία.',
+            'event-start-time': 'Επιλέξτε μια έγκυρη ώρα έναρξης (μόνο ακέραιες ώρες, π.χ. 10:00).',
+            'event-end-time': 'Επιλέξτε μια έγκυρη ώρα λήξης (μόνο ακέραιες ώρες, π.χ. 11:00).',
+            'event-capacity': 'Παρακαλώ εισάγετε μια έγκυρη μέγιστη χωρητικότητα (π.χ. 1 ή μεγαλύτερο).'
+        };
+
         // --- Functions ---
 
         function populateFormDropdowns() {
@@ -1319,8 +1329,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     programSelect.innerHTML = '<option value="">Επιλέξτε Πρόγραμμα...</option>';
                     if (Array.isArray(data)) {
-                        data.filter(p => p.is_active).forEach(p => { // Φιλτράρισμα για ενεργά προγράμματα
-                            programSelect.innerHTML += `<option value="${p.id}" data-type="${p.type}">${p.name} (${p.type === 'group' ? 'Ομαδικό' : 'Ατομικό'})</option>`;
+                        data.filter(p => p.is_active && p.type === 'group').forEach(p => { // Φιλτράρισμα για ενεργά ΚΑΙ ομαδικά προγράμματα
+                            programSelect.innerHTML += `<option value="${p.id}" data-type="${p.type}">${p.name} (Ομαδικό)</option>`;
                         });
                     } else if (data && data.message) {
                         programSelect.innerHTML = `<option value="">${data.message}</option>`;
@@ -1420,7 +1430,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const programTypeDisplay = event.program_type === 'group' ? 'Ομαδικό' : 'Ατομικό';
                         const title = `${event.program_name} (${programTypeDisplay})`;
                         const capacityText = event.max_capacity === null || event.max_capacity === 0 ? 'Απεριόριστες' : event.max_capacity; // Ενημέρωση για null ή 0
-                        const cardColorClass = event.program_type === 'group' ? 'bg-danger-subtle' : 'bg-success-subtle';
+                        const cardColorClass = event.program_type === 'group' ? 'bg-primary-subtle' : 'bg-success-subtle';
                         
                         // **ΝΕΑ ΛΟΓΙΚΗ: Δημιουργία λίστας συμμετεχόντων**
                         let participantsHtml = '<h6 class="fs-6">Συμμετέχοντες:</h6>';
@@ -1480,18 +1490,55 @@ document.addEventListener('DOMContentLoaded', function() {
 
         eventForm.addEventListener('submit', e => {
             e.preventDefault();
+
+            // Καθαρισμός προηγούμενων καταστάσεων επικύρωσης και μηνυμάτων
+            eventForm.classList.remove('was-validated');
+            const messageAreaModal = eventForm.querySelector('.modal-message-area');
+            if (messageAreaModal) messageAreaModal.innerHTML = '';
+
+            Array.from(eventForm.elements).forEach(el => {
+                if (el.willValidate && el.id) { // Ελέγχουμε αν το στοιχείο μπορεί να επικυρωθεί και έχει ID
+                    el.classList.remove('is-invalid');
+                    const feedbackDiv = el.nextElementSibling;
+                    if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                        if (defaultEventFormErrorMessages[el.id]) {
+                            feedbackDiv.textContent = defaultEventFormErrorMessages[el.id];
+                        }
+                    }
+                }
+            });
+
+            // Έλεγχος εγκυρότητας της φόρμας από τον browser (HTML5 validation)
+            if (!eventForm.checkValidity()) {
+                e.stopPropagation(); // Σταμάτημα της περαιτέρω διάδοσης του event
+                eventForm.classList.add('was-validated'); // Ενεργοποίηση των μηνυμάτων του Bootstrap
+                // Προαιρετικά: Εστίαση στο πρώτο άκυρο πεδίο
+                const firstInvalidField = Array.from(eventForm.elements).find(el => !el.validity.valid && el.willValidate);
+                if (firstInvalidField) firstInvalidField.focus();
+                return; // Διακοπή της υποβολής αν η φόρμα δεν είναι έγκυρη
+            }
+
+            // Αν η φόρμα είναι έγκυρη, συνεχίζουμε
             const programSelect = document.getElementById('event-program');
             const selectedOption = programSelect.options[programSelect.selectedIndex];
             const programType = selectedOption.getAttribute('data-type');
 
             const formData = {
                 program_id: document.getElementById('event-program').value,
-                trainer_id: document.getElementById('event-trainer').value || null, // null αν δεν επιλεγεί
+                trainer_id: document.getElementById('event-trainer').value,
+                date: document.getElementById('event-date').value,
                 start_time: `${document.getElementById('event-date').value} ${document.getElementById('event-start-time').value}`,
                 end_time: `${document.getElementById('event-date').value} ${document.getElementById('event-end-time').value}`,
-                // Αν είναι ατομικό, η χωρητικότητα είναι πάντα 1, αλλιώς παίρνει την τιμή από το πεδίο ή null (απεριόριστες)
-                max_capacity: programType === 'individual' ? 1 : (document.getElementById('event-capacity').value || null),
+                max_capacity: document.getElementById('event-capacity').value,
             };
+
+            console.log('Program ID:', document.getElementById('event-program').value);
+            console.log('Date:', document.getElementById('event-date').value);
+            console.log('Start Time:', document.getElementById('event-start-time').value);
+            console.log('End Time:', document.getElementById('event-end-time').value);
+            console.log('Trainer ID:', document.getElementById('event-trainer').value);
+            console.log('Capacity:', document.getElementById('event-capacity').value);
+            // debugger;
 
             apiFetch(`${apiBaseUrl}/events/create.php`, {
                 method: 'POST',
@@ -1510,11 +1557,46 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error creating event:', error);
-                if (messageAreaSchedule) {
-                    messageAreaSchedule.innerHTML = `<div class="alert alert-danger">Σφάλμα δημιουργίας event: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
-                     setTimeout(() => { messageAreaSchedule.innerHTML = ''; }, 4000);
-                } else {
-                    alert(`Σφάλμα κατά τη δημιουργία του event: ${error.message || 'Προέκυψε σφάλμα.'}`);
+                debugger;
+                // Χειρισμός σφαλμάτων από τον server (συμπεριλαμβανομένων των validation errors)
+                if (error && error.errors) { // Δομημένα σφάλματα επικύρωσης
+                    if (messageAreaModal) {
+                        messageAreaModal.innerHTML = `<div class="alert alert-danger">${error.message || 'Παρακαλώ διορθώστε τα σφάλματα.'}</div>`;
+                    } else if (messageAreaSchedule) { // Fallback στο κύριο message area της σελίδας
+                         messageAreaSchedule.innerHTML = `<div class="alert alert-danger">${error.message || 'Παρακαλώ διορθώστε τα σφάλματα.'}</div>`;
+                         setTimeout(() => { messageAreaSchedule.innerHTML = ''; }, 5000);
+                    }
+
+                    for (const fieldKey in error.errors) {
+                        let elementId = '';
+                        // Αντιστοίχιση κλειδιών σφάλματος από τον server με IDs των πεδίων της φόρμας
+                        if (fieldKey === 'program_id') elementId = 'event-program';
+                        else if (fieldKey === 'trainer_id') elementId = 'event-trainer';
+                        else if (fieldKey === 'start_time') elementId = 'event-start-time'; // Το API μπορεί να στείλει start_time για το πεδίο event-date + event-start-time
+                        else if (fieldKey === 'end_time') elementId = 'event-end-time';
+                        else if (fieldKey === 'max_capacity') elementId = 'event-capacity';
+                        else if (fieldKey === 'date' && document.getElementById('event-date')) elementId = 'event-date'; // Αν το API στείλει ξεχωριστό σφάλμα για την ημερομηνία
+                        else elementId = `event-${fieldKey.replace('_', '-')}`; // Γενική προσπάθεια αντιστοίχισης
+
+                        const inputElement = document.getElementById(elementId);
+                        if (inputElement) {
+                            inputElement.classList.add('is-invalid');
+                            const feedbackDiv = inputElement.nextElementSibling;
+                            if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                                feedbackDiv.textContent = error.errors[fieldKey]; // Εμφάνιση του μηνύματος από τον server
+                            }
+                        }
+                    }
+                } else { // Γενικό σφάλμα
+                    const errorMessage = error.message || 'Προέκυψε σφάλμα.';
+                    if (messageAreaModal) {
+                        messageAreaModal.innerHTML = `<div class="alert alert-danger">Σφάλμα δημιουργίας event: ${errorMessage}</div>`;
+                    } else if (messageAreaSchedule) {
+                        messageAreaSchedule.innerHTML = `<div class="alert alert-danger">Σφάλμα δημιουργίας event: ${errorMessage}</div>`;
+                        setTimeout(() => { messageAreaSchedule.innerHTML = ''; }, 5000);
+                    } else {
+                        alert(`Σφάλμα κατά τη δημιουργία του event: ${errorMessage}`);
+                    }
                 }
             });
         });

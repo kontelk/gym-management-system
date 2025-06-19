@@ -39,13 +39,12 @@ if (
     $event->trainer_id = !empty($data->trainer_id) ? $data->trainer_id : null;
 
     // Ορισμός χωρητικότητας: προεπιλογή 20 αν δεν δοθεί ή είναι άκυρη (π.χ. <=0)
-    $event->capacity = (!empty($data->capacity) && filter_var($data->capacity, FILTER_VALIDATE_INT) && (int)$data->capacity > 0)
-                       ? (int)$data->capacity
-                       : 20;
+    $event->max_capacity = (!empty($data->max_capacity) && filter_var($data->max_capacity, FILTER_VALIDATE_INT) && (int)$data->max_capacity > 0)
+                       ? (int)$data->max_capacity : 20;
 
     if ($event->create()) {
         http_response_code(201);
-        echo json_encode(["message" => "Το event δημιουργήθηκε με χωρητικότητα " . $event->capacity . "."]);
+        echo json_encode(["message" => "Το event δημιουργήθηκε με χωρητικότητα " . $event->max_capacity . "."]);
     } else {
         http_response_code(503); // Service Unavailable
         echo json_encode(["message" => "Αδυναμία δημιουργίας του event."]);

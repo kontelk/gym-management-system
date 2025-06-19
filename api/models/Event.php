@@ -14,6 +14,7 @@ class Event {
     public $start_time;
     public $end_time;
     public $max_capacity;
+    public $date;
     
     
 
