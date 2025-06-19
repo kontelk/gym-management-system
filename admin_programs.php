@@ -11,7 +11,7 @@ include 'templates/header.php';
     <div id="message-area" class="mt-3"></div>
     <div class="table-responsive">
         <table class="table table-striped">
-            <thead><tr><th>Όνομα</th><th>Τύπος</th><th>Κατάσταση</th><th>Ενέργειες</th></tr></thead>
+            <thead><tr><th>Όνομα</th><th>Τύπος</th><th>Χωρητικότητα</th><th>Κατάσταση</th><th>Ενέργειες</th></tr></thead>
             <tbody id="programs-tbody"></tbody>
         </table>
     </div>
@@ -41,6 +41,10 @@ include 'templates/header.php';
                             <option value="individual">Ατομικό</option>
                             <option value="group">Ομαδικό</option>
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="program-max-capacity" class="form-label">Μέγιστη Χωρητικότητα (*)</label>
+                        <input type="number" class="form-control" id="program-max-capacity" min="1" value="20" required>
                     </div>
                     <div class="mb-3 form-check" id="status-wrapper">
                         <input type="checkbox" class="form-check-input" id="program-is-active">

@@ -30,10 +30,19 @@ $data = json_decode(file_get_contents("php://input"));
 
 // Έλεγχος ότι τα δεδομένα είναι πλήρη
 if (
-    !empty($data->id) &&
-    !empty($data->name) &&
-    !empty($data->type) &&
-    isset($data->is_active) // Το is_active μπορεί να είναι false, οπότε ελέγχουμε με isset
+    // !empty($data->id) &&
+    // !empty($data->name) &&
+    // !empty($data->type) &&
+    // isset($data->is_active) // Το is_active μπορεί να είναι false, οπότε ελέγχουμε με isset
+
+    isset($data->id, $data->name, $data->description, $data->type, $data->is_active, $data->max_capacity) &&
+    filter_var($data->id, FILTER_VALIDATE_INT) !== false &&
+    trim($data->name) !== '' &&
+    trim($data->description) !== '' &&
+    in_array($data->type, ['individual', 'group']) &&
+    is_bool($data->is_active) &&
+    filter_var($data->max_capacity, FILTER_VALIDATE_INT) !== false &&
+    (int)$data->max_capacity >= 1
 ) {
     // Ορισμός των ιδιοτήτων του program object
     $program->id = $data->id;
@@ -41,6 +50,7 @@ if (
     $program->description = $data->description;
     $program->type = $data->type;
     $program->is_active = $data->is_active;
+    $program->max_capacity = (int)$data->max_capacity;
 
     // Προσπάθεια ενημέρωσης
     if ($program->update()) {

@@ -116,6 +116,7 @@ class Booking {
     public function readByUserId() {
         $query = "SELECT
                     b.id AS booking_id,
+                    e.id AS event_id,
                     p.name AS program_name,
                     e.start_time,
                     b.status

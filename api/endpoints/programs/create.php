@@ -15,10 +15,22 @@ $db = $database->getConnection();
 $program = new Program($db);
 $data = json_decode(file_get_contents("php://input"));
 
-if (!empty($data->name) && !empty($data->type)) {
-    $program->name = $data->name;
-    $program->description = $data->description ?? '';
+if (
+    // !empty($data->name) && 
+    // !empty($data->type
+    isset($data->name, $data->description, $data->type, $data->max_capacity) &&
+    trim($data->name) !== '' &&
+    trim($data->description) !== '' &&
+    in_array($data->type, ['individual', 'group']) &&
+    filter_var($data->max_capacity, FILTER_VALIDATE_INT) !== false &&
+    (int)$data->max_capacity >= 1
+) {
+    $program->name = trim($data->name);
+    $program->description = trim($data->description);
     $program->type = $data->type;
+    $program->is_active = isset($data->is_active) ? (bool)$data->is_active : true; // Default to active for new programs
+    $program->max_capacity = (int)$data->max_capacity;
+    
     if ($program->create()) {
         http_response_code(201);
         echo json_encode(["message" => "Το πρόγραμμα δημιουργήθηκε."]);

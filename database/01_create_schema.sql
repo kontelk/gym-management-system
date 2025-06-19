@@ -75,6 +75,7 @@ CREATE TABLE `programs` (
   `description` TEXT NULL,
   `type` ENUM('individual', 'group') NOT NULL,
   `is_active` BOOLEAN NOT NULL DEFAULT TRUE,
+  `max_capacity` INT UNSIGNED NOT NULL DEFAULT 20,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_program_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -531,6 +531,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const programTitleEl = document.getElementById('program-title');
         const datePicker = document.getElementById('date-picker');
         const availabilityResults = document.getElementById('availability-results');
+        let selectedDate =  null; // Αρχικοποίηση της μεταβλητής για την επιλεγμένη ημερομηνία
         
         // Ορισμός της ελάχιστης ημερομηνίας στο σήμερα
         datePicker.min = new Date().toISOString().split("T")[0];
@@ -557,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // --- Event Listener για αλλαγή ημερομηνίας ---
         datePicker.addEventListener('change', function() {
-            const selectedDate = this.value;
+            selectedDate = this.value;
             if (programId && selectedDate) {
                 fetchAvailability(programId, selectedDate);
             }
@@ -566,32 +567,76 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- Συνάρτηση για φόρτωση διαθεσιμότητας ---
         function fetchAvailability(pId, date) {
             availabilityResults.innerHTML = `<p class="text-center">Αναζήτηση διαθεσιμότητας...</p>`;
-            // Η apiFetch θα προσθέσει αυτόματα το Authorization header
-            apiFetch(`${apiBaseUrl}/events/search.php?program_id=${pId}&date=${date}`)
-            .then(data => {
+
+            Promise.all([
+                apiFetch(`${apiBaseUrl}/events/search.php?program_id=${pId}&date=${date}`),
+                apiFetch(`${apiBaseUrl}/bookings/read_by_user.php`) // Φέρνουμε όλες τις κρατήσεις του χρήστη
+            ])
+            .then(([slotsData, userBookingsData]) => {
                 availabilityResults.innerHTML = ''; // Καθαρισμός
-                if (data && data.message && !Array.isArray(data)) { // Αν είναι μήνυμα, π.χ. "Δεν βρέθηκαν events"
-                    availabilityResults.innerHTML = `<p class="text-center text-warning">${data.message}</p>`;
-                } else if (Array.isArray(data) && data.length === 0) { // Αν είναι κενός πίνακας
+
+                let slots = [];
+                if (Array.isArray(slotsData)) {
+                    slots = slotsData;
+                } else if (slotsData && slotsData.message) {
+                    availabilityResults.innerHTML = `<p class="text-center text-warning">${slotsData.message}</p>`;
+                    return;
+                } else {
+                    availabilityResults.innerHTML = `<p class="text-center text-danger">Σφάλμα φόρτωσης διαθέσιμων τμημάτων.</p>`;
+                    console.error("Unexpected data format for slots:", slotsData);
+                    return;
+                }
+
+                let userBookings = [];
+                if (Array.isArray(userBookingsData)) {
+                    userBookings = userBookingsData;
+                } // Αν το userBookingsData έχει message (π.χ. "Δεν έχετε κρατήσεις"), το userBookings παραμένει κενό, που είναι οκ.
+                const userBookedEventIds = new Set(userBookings.map(b => parseInt(b.event_id, 10)));
+                console.log('User Bookings:', userBookings);
+                console.log('User booked event IDs:', userBookedEventIds);
+                //debugger; // Για να δούμε τα δεδομένα στο console
+
+                // Έλεγχος αν ο χρήστης έχει ήδη κράτηση για αυτό το πρόγραμμα (pId) σε αυτή την ημερομηνία (date)
+                // Αυτό γίνεται ελέγχοντας αν κάποιο από τα event_id των τρεχόντων slots υπάρχει στις κρατήσεις του χρήστη.
+                const userHasBookingForProgramOnThisDate = slots.some(slot => userBookedEventIds.has(parseInt(slot.event_id, 10)));
+                console.log('User has booking for this program on this date:', userHasBookingForProgramOnThisDate);
+                debugger; // Για να δούμε τα δεδομένα στο console
+
+                if (slots.length === 0) {
                     availabilityResults.innerHTML = `<p class="text-center text-info">Δεν υπάρχει διαθεσιμότητα για την επιλεγμένη ημερομηνία.</p>`;
-                } else if (Array.isArray(data)) { // Αν έχουμε δεδομένα
-                    data.forEach(slot => {
+                    return;
+                }
+
+                slots.forEach(slot => {
                         const startTime = new Date(slot.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        const userHasBookedThisSpecificSlot = userBookedEventIds.has(parseInt(slot.event_id, 10));
+                        let bookedBadgeHtml = '';
+                        if (userHasBookedThisSpecificSlot) {
+                            // Αν ο χρήστης έχει ήδη κάνει κράτηση για αυτό το slot, εμφανίζουμε μήνυμα "Έχετε κάνει Κράτηση".
+                            bookedBadgeHtml = '<span class="badge bg-danger text-light ms-2">Έχετε κάνει Κράτηση</span>';
+                        }
+                        const disableButton = slot.available_slots <= 0 || userHasBookingForProgramOnThisDate;
+                        let bookButtonHtml = '';
+                        if (disableButton) {
+                            // Αν ο χρήστης έχει ήδη κράτηση για αυτό το slot, το κουμπί "Κράτηση" είναι απενεργοποιημένο.
+                            bookButtonHtml = `<button class="btn btn-secondary btn-sm" disabled>Κράτηση</button>`;
+                        } else {
+                            bookButtonHtml = `<button class="btn btn-success btn-sm book-btn" data-event-id="${slot.event_id}">Κράτηση</button>`;
+                        }
+                        // Δημιουργία του HTML στοιχείου για κάθε διαθέσιμο slot
+                        // Χρησιμοποιούμε template literals για να κάνουμε τον κώδικα πιο καθαρό
                         const item = `
-                            <div class="list-group-item d-flex justify-content-between align-items-center mb-2">
+                            <div class="list-group-item py-0 w-75 mx-auto d-flex justify-content-between align-items-center mb-1 bg-body-secondary">
                                 <div>
-                                    <strong>Ώρα:</strong> ${startTime} | 
-                                    <strong>Διαθέσιμες Θέσεις:</strong> ${slot.available_slots}
+                                    <strong>${startTime}</strong> | Διαθέσιμες θέσεις:
+                                    <span class="badge ${slot.available_slots > 5 ? 'bg-primary' : (slot.available_slots > 0 ? 'bg-warning' : 'bg-danger')}">${slot.available_slots}</span>
                                 </div>
-                                <button class="btn btn-success book-btn" data-event-id="${slot.event_id}">Κράτηση</button>
+                                ${bookedBadgeHtml}
+                                ${bookButtonHtml}
                             </div>
                         `;
                         availabilityResults.innerHTML += item;
                     });
-                } else {
-                    availabilityResults.innerHTML = `<p class="text-center text-warning">Μη αναμενόμενη απάντηση από τον server.</p>`;
-                    console.error("Unexpected data format for availability:", data);
-                }
             })
             .catch(error => {
                 console.error('Error fetching availability:', error);
@@ -607,7 +652,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     createBooking(eventId);
                 }
             }
+            fetchAvailability(programId, selectedDate); //  Επαναφόρτωση της διαθεσιμότητας μετά την κράτηση
         });
+        
         
         // --- Συνάρτηση για δημιουργία κράτησης ---
         function createBooking(eId) {
@@ -620,9 +667,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Η κράτηση δημιουργήθηκε επιτυχώς!'}</div>`;
                 // **ΝΕΟ: Ανακατεύθυνση στη σελίδα "Οι Κρατήσεις μου" μετά από μικρή καθυστέρηση**
-                setTimeout(() => {
-                    window.location.href = 'my_bookings.php';
-                }, 1500); // Καθυστέρηση 1.5 δευτερόλεπτο για να φανεί το μήνυμα
+                // setTimeout(() => {
+                //     window.location.href = 'my_bookings.php';
+                // }, 1500); // Καθυστέρηση 1.5 δευτερόλεπτο για να φανεί το μήνυμα
             })
             .catch(error => {
                 console.error('Error creating booking:', error);
@@ -649,7 +696,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function fetchMyBookings() {
             bookingsContainer.innerHTML = '<tr><td colspan="4" class="text-center">Φόρτωση κρατήσεων...</td></tr>';
-
             apiFetch(`${apiBaseUrl}/bookings/read_by_user.php`)
             .then(data => {
                 bookingsContainer.innerHTML = '';
@@ -659,29 +705,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     bookingsContainer.innerHTML = `<tr><td colspan="4" class="text-center">${data.message}</td></tr>`;
                     return;
                 }
-                
                 const now = new Date();
                 
                 data.forEach(booking => {
                     const eventDate = new Date(booking.start_time);
                     const hoursDiff = (eventDate - now) / 1000 / 3600;
-
+                    // Φτιάχνουμε μια booolean μεταβλητή για ακυρωμένες κρατήσεις < 2 ώρες πριν
+                    const immutable = (booking.status === 'cancelled_by_user' || booking.status === 'cancelled_by_admin' || hoursDiff < 2);
+                    let programNameStr = '';
+                    let eventDateStr = '';
+                    if (immutable) {
+                        // Αν η κράτηση είναι ακυρωμένη και < 2 ώρες πριν, εμφανίζουμε το πρόγραμμα και την ημερομηνία
+                        // με την κλάση text-muted για να δείχνει ότι δεν είναι ενεργή.
+                        programNameStr = `<span class="text-muted" style="opacity: 0.5">${booking.program_name}</span>`;
+                        eventDateStr = `<span class="text-muted" style="opacity: 0.5">${eventDate.toLocaleString('el-GR')}</span>`;
+                    } else {
+                        programNameStr = booking.program_name;
+                        eventDateStr = eventDate.toLocaleString('el-GR');
+                    }
+                    // Δημιουργία του status badge ανάλογα με την κατάσταση της κράτησης
                     let statusBadge = '';
                     switch(booking.status) {
                         case 'confirmed': statusBadge = '<span class="badge bg-success">Επιβεβαιωμένη</span>'; break;
                         case 'cancelled_by_user': statusBadge = '<span class="badge bg-warning text-dark">Ακυρωμένη</span>'; break;
                         default: statusBadge = `<span class="badge bg-secondary">${booking.status}</span>`;
                     }
-
                     // Το κουμπί ακύρωσης εμφανίζεται μόνο για μελλοντικές, επιβεβαιωμένες κρατήσεις > 2 ώρες πριν
                     const cancelButton = (booking.status === 'confirmed' && hoursDiff > 2)
                         ? `<button class="btn btn-danger btn-sm cancel-btn" data-booking-id="${booking.booking_id}">Ακύρωση</button>`
                         : '';
-                    
+                    // Δημιουργία της γραμμής του πίνακα με τα δεδομένα της κράτησης
                     const row = `
                         <tr>
-                            <td>${booking.program_name}</td>
-                            <td>${eventDate.toLocaleString('el-GR')}</td>
+                            <td>${programNameStr}</td>
+                            <td>${eventDateStr}</td>
                             <td>${statusBadge}</td>
                             <td>${cancelButton}</td>
                         </tr>
@@ -855,13 +912,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const row = `<tr>
                                     <!-- εαν user.status είναι rejected ή inactive τότε κάνε το χρώμα του κειμένου πολύ ανοιχτό πολύ θαμπό (περισσότερο από text-muted) -->
                                      
-                                    <td class="${user.status === 'rejected' || user.status === 'inactive' ? 'text-muted' : ''}">${user.username}</td>
+                                    <td   ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${user.username}</td>
+                                    <td   ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${user.last_name} ${user.first_name}</td>
+                                    <td   ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${user.email}</td>
+                                    <td   ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${roleBadge}</td>
+                                    <td   ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${statusBadge}</td>
                                     
-                                    
-                                    <td>${user.last_name} ${user.first_name}</td>
-                                    <td>${user.email}</td>
-                                    <td>${roleBadge}</td>
-                                    <td>${statusBadge}</td>
                                     <td>
                                         <a href="#" class="edit-btn me-2" data-id="${user.id}" data-username="${user.username}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="25"></a>
                                         <a href="#" class="delete-btn" data-id="${user.id}" data-username="${user.username}" data-bs-toggle="tooltip" data-bs-title="Διαγραφή"><img src="icons/bin.png" alt="Διαγραφή" width="25"></a>
@@ -1070,19 +1126,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     programsTbody.innerHTML = '';
                     
                     if (data && data.message && !Array.isArray(data)) {
-                        programsTbody.innerHTML = `<tr><td colspan="4" class="text-center">${data.message}</td></tr>`;
+                        programsTbody.innerHTML = `<tr><td colspan="5" class="text-center">${data.message}</td></tr>`;
                     } else if (Array.isArray(data) && data.length === 0) {
-                        programsTbody.innerHTML = `<tr><td colspan="4" class="text-center">Δεν βρέθηκαν προγράμματα.</td></tr>`;
+                        programsTbody.innerHTML = `<tr><td colspan="5" class="text-center">Δεν βρέθηκαν προγράμματα.</td></tr>`;
                     } else if (Array.isArray(data)) {
                         data.forEach(p => {
-                            const programName = p.is_active ? `${p.name}` : `<span class="text-muted" style="opacity: 0.5"><em>${p.name}</em></span>`;
-                            const statusBadge = p.is_active ? 'Ενεργό' : '<span class="badge bg-secondary" style="opacity: 0.5"><em>Ανενεργό</em></span>';
+                            const programName = p.is_active ? `${p.name}` : `<span class="text-muted" style="opacity: 0.5">${p.name}</span>`;
+                            const statusBadge = p.is_active ? 'Ενεργό' : '<span class="badge bg-secondary" style="opacity: 0.5">Ανενεργό</span>';
                             const programType = p.type === 'group' ? '<span class="badge bg-danger">Ομαδικό</span>' : '<span class="badge bg-success">Ατομικό</span>';
-                            const progranTypeFormatted = p.is_active ? programType : `<span class="text-muted" style="opacity: 0.5"><em>${programType}</em></span>`;
+                            const progranTypeFormatted = p.is_active ? programType : `<span class="text-muted" style="opacity: 0.5">${programType}</span>`;
+                            const maxCapacityDisplay = p.is_active ? `${p.max_capacity} άτομα` : `<span class="text-muted" style="opacity: 0.5">${p.max_capacity} άτομα</span>`;
                             const row = `<tr>
                     
                                 <td>${programName}</td>
                                 <td>${progranTypeFormatted}</td>
+                                <td>${maxCapacityDisplay}</td>
                                 <td>${statusBadge}</td>
                                 <td>                   
                     
@@ -1096,13 +1154,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         const tooltipTriggerList = [...programsTbody.querySelectorAll('[data-bs-toggle="tooltip"]')];
                         tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
                     } else {
-                        programsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-warning">Μη αναμενόμενη απάντηση από τον server.</td></tr>`;
+                        programsTbody.innerHTML = `<tr><td colspan="5" class="text-center text-warning">Μη αναμενόμενη απάντηση από τον server.</td></tr>`;
                         console.error("Unexpected data format for admin programs:", data);
                     }
                 })
                 .catch(error => {
                     console.error('Error fetching admin programs:', error);
-                    programsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Σφάλμα φόρτωσης προγραμμάτων: ${error.message || 'Προέκυψε σφάλμα'}</td></tr>`;
+                    programsTbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Σφάλμα φόρτωσης προγραμμάτων: ${error.message || 'Προέκυψε σφάλμα'}</td></tr>`;
                 });
         }
         
@@ -1112,6 +1170,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('program-id').value = '';
             document.getElementById('modal-title').textContent = 'Προσθήκη Νέου Προγράμματος';
             document.getElementById('status-wrapper').style.display = 'none'; // Κρύβουμε το status για νέα
+            document.getElementById('program-max-capacity').value = 20; // Προεπιλεγμένη τιμή για νέα προγράμματα
             programModal.show();
         });
 
@@ -1131,6 +1190,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.getElementById('program-description').value = p.description;
                             document.getElementById('program-type').value = p.type;
                             document.getElementById('program-is-active').checked = p.is_active == 1; // == 1 για σωστή απόδοση του boolean
+                            document.getElementById('program-max-capacity').value = p.max_capacity;
                             document.getElementById('status-wrapper').style.display = 'block';
                             document.getElementById('modal-title').textContent = 'Επεξεργασία Προγράμματος';
                             programModal.show();
@@ -1174,7 +1234,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 name: document.getElementById('program-name').value,
                 description: document.getElementById('program-description').value,
                 type: document.getElementById('program-type').value,
-                is_active: id ? document.getElementById('program-is-active').checked : true // Για νέα προγράμματα, default σε active
+                is_active: id ? document.getElementById('program-is-active').checked : true, // Για νέα προγράμματα, default σε active
+                max_capacity: parseInt(document.getElementById('program-max-capacity').value, 10)
             };
 
             apiFetch(url, {

@@ -9,10 +9,10 @@ include 'templates/header.php';
     <h2 id="program-title" class="text-center mb-4">Φόρτωση προγράμματος...</h2>
     
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-3">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">1. Επιλέξτε Ημερομηνία</h5>
+                    <h5 class="card-title text-center">1. Επιλέξτε Ημερομηνία</h5>
                     <div class="mb-3">
                         <input type="date" class="form-control" id="date-picker">
                     </div>

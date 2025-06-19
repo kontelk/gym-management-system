@@ -14,6 +14,7 @@ class Program {
     public $description;
     public $type;
     public $is_active;
+    public $max_capacity;
 
     /**
      * Constructor που δέχεται το αντικείμενο της σύνδεσης με τη βάση.
@@ -48,21 +49,7 @@ class Program {
     }
 
 
-    // /**
-    //  * Διαβάζει τις πληροφορίες ενός μόνο προγράμματος με βάση το ID.
-    //  */
-    // public function readOne() {
-    //     $query = "SELECT id, name, description, type FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
-    //     $stmt = $this->conn->prepare($query);
-    //     $stmt->bindParam(':id', $this->id);
-    //     $stmt->execute();
-    //     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    //     if ($row) {
-    //         $this->name = $row['name'];
-    //         $this->description = $row['description'];
-    //         $this->type = $row['type'];
-    //     }
-    // }
+
 
 
     /**
@@ -89,24 +76,31 @@ class Program {
 
 
 
-    // ... (υπάρχουσες μέθοδοι readAllActive, readOne)
+
 
     /**
      * Δημιουργεί ένα νέο πρόγραμμα.
      * @return bool True αν η δημιουργία ήταν επιτυχής, αλλιώς false.
      */
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . " SET name=:name, description=:description, type=:type";
+        $query = "INSERT INTO " . $this->table_name . "
+                  SET name=:name, description=:description, 
+                      type=:type, is_active=:is_active,
+                      max_capacity=:max_capacity";
         $stmt = $this->conn->prepare($query);
 
         // Απολύμανση
         $this->name = htmlspecialchars(strip_tags($this->name));
         $this->description = htmlspecialchars(strip_tags($this->description));
         $this->type = htmlspecialchars(strip_tags($this->type));
+        $this->is_active = $this->is_active ? 1 : 0;  // Μετατρέπουμε σε 1 ή 0 για αποθήκευση
+        $this->max_capacity = isset($this->max_capacity) ? (int)$this->max_capacity : 20; // Default if not set
 
         $stmt->bindParam(":name", $this->name);
         $stmt->bindParam(":description", $this->description);
         $stmt->bindParam(":type", $this->type);
+        $stmt->bindParam(":is_active", $this->is_active);
+        $stmt->bindParam(":max_capacity", $this->max_capacity);
 
         return $stmt->execute();
     }
@@ -117,7 +111,9 @@ class Program {
      */
     public function update() {
         $query = "UPDATE " . $this->table_name . "
-                  SET name = :name, description = :description, type = :type, is_active = :is_active
+                  SET name = :name, description = :description, 
+                      type = :type, is_active = :is_active,
+                      max_capacity = :max_capacity
                   WHERE id = :id";
         $stmt = $this->conn->prepare($query);
 
@@ -125,17 +121,15 @@ class Program {
         $this->name = htmlspecialchars(strip_tags($this->name));
         $this->description = htmlspecialchars(strip_tags($this->description));
         $this->type = htmlspecialchars(strip_tags($this->type));
-        $this->is_active = htmlspecialchars(strip_tags($this->is_active));
+        $this->is_active = $this->is_active ? 1 : 0;  // Μετατρέπουμε σε 1 ή 0 για αποθήκευση
+        $this->max_capacity = isset($this->max_capacity) ? (int)$this->max_capacity : 20; // Default if not set
         $this->id = htmlspecialchars(strip_tags($this->id));
-
-        // Ελέγχουμε αν το is_active είναι '1' ή '' και το μετατρέπουμε σε '1' ή '0'
-        $is_active_value = ($this->is_active == '1') ? '1' : '0';
 
         $stmt->bindParam(':name', $this->name);
         $stmt->bindParam(':description', $this->description);
         $stmt->bindParam(':type', $this->type);
-        // $stmt->bindParam(':is_active', $this->is_active);
-        $stmt->bindParam(':is_active', $is_active_value);
+        $stmt->bindParam(':is_active', $this->is_active); 
+        $stmt->bindParam(':max_capacity', $this->max_capacity);
         $stmt->bindParam(':id', $this->id);
 
         return $stmt->execute();
@@ -161,7 +155,7 @@ class Program {
      * @return PDOStatement
      */
     public function readAllForAdmin() {
-        $query = "SELECT id, name, description, type, is_active FROM " . $this->table_name . " ORDER BY id";
+        $query = "SELECT id, name, description, type, max_capacity, is_active FROM " . $this->table_name . " ORDER BY id";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;

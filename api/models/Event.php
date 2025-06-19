@@ -260,7 +260,7 @@ class Event {
         if ($count == 0) {
             $this->conn->beginTransaction();
             try {
-                $insert_query = "INSERT INTO " . $this->table_name . " (program_id, start_time, end_time, max_capacity) VALUES (:program_id, :start_time, :end_time, NULL)";
+                $insert_query = "INSERT INTO " . $this->table_name . " (program_id, start_time, end_time, max_capacity) VALUES (:program_id, :start_time, :end_time, 20)";
                 $stmt_insert = $this->conn->prepare($insert_query);
                 
                 // Δημιουργία ωριαίων slots από τις 08:00 έως τις 22:00
