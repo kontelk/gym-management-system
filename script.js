@@ -921,11 +921,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const row = `<tr>
                                     <!-- εαν user.status είναι rejected ή inactive τότε κάνε το χρώμα του κειμένου πολύ ανοιχτό πολύ θαμπό (περισσότερο από text-muted) -->
                                      
-                                    <td   ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${user.username}</td>
-                                    <td   ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${user.last_name} ${user.first_name}</td>
-                                    <td   ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${user.email}</td>
-                                    <td   ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${roleBadge}</td>
-                                    <td   ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${statusBadge}</td>
+                                    <td ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${user.username}</td>
+                                    <td ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${user.last_name} ${user.first_name}</td>
+                                    <td ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${user.email}</td>
+                                    <td ${user.status === 'rejected' || user.status === 'inactive' ? ' class="text-muted" style="opacity: 0.5" ' : ''} >${roleBadge}</td>
+                                    <td>${statusBadge}</td>
                                     
                                     <td>
                                         <a href="#" class="edit-btn me-2" data-id="${user.id}" data-username="${user.username}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="25"></a>
