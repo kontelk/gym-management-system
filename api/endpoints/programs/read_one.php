@@ -31,6 +31,7 @@ if ($program->name != null) {
         "name" => $program->name,
         "description" => $program->description,
         "type" => $program->type,
+        "max_capacity" => $program->max_capacity,
         "is_active" => $program->is_active
     ];
     http_response_code(200);

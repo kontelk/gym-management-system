@@ -25,15 +25,18 @@ include 'templates/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="program-form">
+                <div id="modal-message-area" class="mb-3"></div> <!-- ΝΕΟ: Χώρος μηνυμάτων μέσα στο modal -->
+                <form id="program-form" class="needs-validation" novalidate>
                     <input type="hidden" id="program-id">
                     <div class="mb-3">
                         <label for="program-name" class="form-label">Όνομα (*)</label>
                         <input type="text" class="form-control" id="program-name" required>
+                        <div class="form-text">Συμπληρώστε όνομα προγράμματος</div>
                     </div>
                     <div class="mb-3">
                         <label for="program-description" class="form-label">Περιγραφή (*)</label>
-                        <textarea class="form-control" id="program-description" rows="3"></textarea>
+                        <textarea class="form-control" id="program-description" rows="3" required></textarea>
+                        <div class="form-text">Συμπληρώστε περιγραφή του προγράμματος</div>
                     </div>
                     <div class="mb-3">
                         <label for="program-type" class="form-label">Τύπος (*)</label>
@@ -41,10 +44,12 @@ include 'templates/header.php';
                             <option value="individual">Ατομικό</option>
                             <option value="group">Ομαδικό</option>
                         </select>
+                        <div class="form-text">Επιλέξτε τον τύπο του προγράμματος</div>
                     </div>
                     <div class="mb-3">
                         <label for="program-max-capacity" class="form-label">Μέγιστη Χωρητικότητα (*)</label>
                         <input type="number" class="form-control" id="program-max-capacity" min="1" value="20" required>
+                        <div class="form-text">Ορίστε τη μέγιστη χωρητικότητα του προγράμματος</div>
                     </div>
                     <div class="mb-3 form-check" id="status-wrapper">
                         <input type="checkbox" class="form-check-input" id="program-is-active">

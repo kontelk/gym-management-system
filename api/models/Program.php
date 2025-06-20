@@ -31,7 +31,7 @@ class Program {
     public function readAllActive() {
         // Το query για την επιλογή όλων των ενεργών προγραμμάτων
         $query = "SELECT
-                    id, name, description, type
+                    id, name, description, type, max_capacity
                   FROM
                     " . $this->table_name . "
                   WHERE
@@ -57,7 +57,7 @@ class Program {
      */
     public function readOne() {
         // Προσθέτουμε το πεδίο is_active στο SELECT
-        $query = "SELECT id, name, description, type, is_active FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
+        $query = "SELECT id, name, description, type, max_capacity, is_active FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $this->id);
@@ -70,6 +70,7 @@ class Program {
             $this->description = $row['description'];
             $this->type = $row['type'];
             $this->is_active = $row['is_active'];
+            $this->max_capacity = $row['max_capacity'];
         }
     }
 
@@ -162,4 +163,18 @@ class Program {
     }
 
 
+    /**
+     * Summary of deleteProgram
+     * @return bool
+     */
+    public function deleteProgram() {
+        $query = "DELETE FROM programs WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $this->id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+
+
+    
 }

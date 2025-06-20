@@ -457,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (programsContainer) {
         const messageArea = document.getElementById('message-area');
         // Προαιρετικά: Εμφάνιση μηνύματος φόρτωσης
-        // programsContainer.innerHTML = '<p class="text-center">Φόρτωση προγραμμάτων...</p>';
+        programsContainer.innerHTML = '<p class="text-center">Φόρτωση προγραμμάτων...</p>';
 
         apiFetch(`${apiBaseUrl}/programs/read.php`)
             .then(data => {
@@ -1127,12 +1127,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const messageArea = document.getElementById('message-area');
         const programModal = new bootstrap.Modal(document.getElementById('program-modal'));
         const programForm = document.getElementById('program-form');
+        const modalMessageArea = document.getElementById('modal-message-area'); // ΝΕΟ: Selector για το message area του modal
 
         // Φόρτωση των προγραμμάτων
         function fetchAdminPrograms() {
             apiFetch(`${apiBaseUrl}/programs/read_admin.php`)
                 .then(data => {
                     programsTbody.innerHTML = '';
+                    // Καθαρισμός του κύριου message area της σελίδας κατά την επαναφόρτωση
+                    // για να μην μένουν παλιά μηνύματα επιτυχίας/σφάλματος από προηγούμενες ενέργειες.
+                    if (messageArea) {
+                        messageArea.innerHTML = '';
+                    }
                     
                     if (data && data.message && !Array.isArray(data)) {
                         programsTbody.innerHTML = `<tr><td colspan="5" class="text-center">${data.message}</td></tr>`;
@@ -1145,18 +1151,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             const programType = p.type === 'group' ? '<span class="badge bg-danger">Ομαδικό</span>' : '<span class="badge bg-success">Ατομικό</span>';
                             const progranTypeFormatted = p.is_active ? programType : `<span class="text-muted" style="opacity: 0.5">${programType}</span>`;
                             const maxCapacityDisplay = p.is_active ? `${p.max_capacity} άτομα` : `<span class="text-muted" style="opacity: 0.5">${p.max_capacity} άτομα</span>`;
-                            const row = `<tr>
-                    
-                                <td>${programName}</td>
-                                <td>${progranTypeFormatted}</td>
-                                <td>${maxCapacityDisplay}</td>
-                                <td>${statusBadge}</td>
-                                <td>                   
-                    
-                                <a href="#" class="edit-btn me-2" data-id="${p.id}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="18"></a>
-                                    ${p.is_active ? `<a href="#" class="disable-btn me-2" data-id="${p.id}" data-bs-toggle="tooltip" data-bs-title="Απενεργοποίηση"><img src="icons/disable.png" alt="Απενεργοποίηση" width="18"></a>` : ''}
-                                </td>
-                            </tr>`;
+                            const row = `
+                                <tr>
+                                    <td>${programName}</td>
+                                    <td>${progranTypeFormatted}</td>
+                                    <td>${maxCapacityDisplay}</td>
+                                    <td>${statusBadge}</td>
+                                    <td>                   
+                                        <a href="#" class="edit-btn me-2" data-id="${p.id}" data-bs-toggle="tooltip" data-bs-title="Επεξεργασία"><img src="icons/pen.png" alt="Επεξεργασία" width="25"></a>
+                                        <a href="#" class="delete-btn me-2" data-id="${p.id}" data-bs-toggle="tooltip" data-bs-title="Διαγραφή"><img src="icons/bin.png" alt="Διαγραφή" width="25"></a>
+                                        ${p.is_active ? `<a href="#" class="disable-btn me-2" data-id="${p.id}" data-bs-toggle="tooltip" data-bs-title="Απενεργοποίηση"><img src="icons/disable.png" alt="Απενεργοποίηση" width="25"></a>` : 
+                                            `<span class="text-muted" style="opacity: 0.5"><img src="icons/disable.png" alt="Απενεργοποίηση" width="25"></span>`}
+
+                                    </td>
+                                </tr>`;
                             programsTbody.innerHTML += row;
                         });
                         // Ενεργοποίηση tooltip για τα εικονίδια μόνο εντός του programsTbody
@@ -1179,6 +1187,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('program-id').value = '';
             document.getElementById('modal-title').textContent = 'Προσθήκη Νέου Προγράμματος';
             document.getElementById('status-wrapper').style.display = 'none'; // Κρύβουμε το status για νέα
+            if (modalMessageArea) modalMessageArea.innerHTML = ''; // Καθαρισμός μηνυμάτων στο modal
             document.getElementById('program-max-capacity').value = 20; // Προεπιλεγμένη τιμή για νέα προγράμματα
             programModal.show();
         });
@@ -1202,6 +1211,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.getElementById('program-max-capacity').value = p.max_capacity;
                             document.getElementById('status-wrapper').style.display = 'block';
                             document.getElementById('modal-title').textContent = 'Επεξεργασία Προγράμματος';
+                            
+                            console.log(`Editing program with ID: ${p.id}`); // Για debugging
+                            console.log(`Program data: ${JSON.stringify(p)}`); // Για debugging
+                            console.log(`Program is active: ${p.is_active}`); // Για debugging
+                            console.log(`Program max capacity: ${p.max_capacity}`); // Για debugging
+                            if (modalMessageArea) modalMessageArea.innerHTML = ''; // Καθαρισμός μηνυμάτων στο modal
+                            debugger;
                             programModal.show();
                         } else {
                             messageArea.innerHTML = `<div class="alert alert-warning">${(p && p.message) || 'Δεν βρέθηκε το πρόγραμμα ή τα δεδομένα είναι ελλιπή.'}</div>`;
@@ -1210,6 +1226,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .catch(error => {
                         console.error('Error fetching program details for edit:', error);
                         messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα φόρτωσης λεπτομερειών: ${error.message || 'Άγνωστο σφάλμα.'}</div>`;
+                        setTimeout(() => { messageArea.innerHTML = ''; }, 5000); // Αυτόματο κλείσιμο μετά από 5 δευτ.
                     });
             } else if (targetLink.classList.contains('disable-btn')) {
                 // Επιβεβαίωση απενεργοποίησης
@@ -1229,6 +1246,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
                     });
                 }
+            } else if (targetLink.classList.contains('delete-btn')) {
+                // Επιβεβαίωση διαγραφής
+                if (confirm('Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτό το πρόγραμμα; ΠΡΟΣΟΧΗ: Με την ενέργεια αυτή θα διαγραφούν οριστικά και όλα τα προγραμματισμένα events καθώς και οι κρατήσεις που σχετίζονται με αυτό. Η ενέργεια είναι μη αναστρέψιμη.')) {
+                    apiFetch(`${apiBaseUrl}/programs/delete.php`, {
+                        method: 'POST',
+                        body: JSON.stringify({ id: id })
+                    })
+                    .then(data => {
+                        messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Το πρόγραμμα διαγράφηκε επιτυχώς.'}</div>`;
+                        fetchAdminPrograms(); // Ανανέωση της λίστας
+                        setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                    })
+                    .catch(error => {
+                        console.error('Error deleting program:', error);
+                        messageArea.innerHTML = `<div class="alert alert-danger">Σφάλμα διαγραφής: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
+                        setTimeout(() => { messageArea.innerHTML = ''; }, 4000);
+                    });
+                }
             }
         });
 
@@ -1245,11 +1280,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 type: document.getElementById('program-type').value,
                 is_active: id ? document.getElementById('program-is-active').checked : true, // Για νέα προγράμματα, default σε active
                 max_capacity: parseInt(document.getElementById('program-max-capacity').value, 10)
+                
             };
+            // debugger;
+            // Ελέγχουμε αν το max_capacity είναι έγκυρο
+            if (isNaN(formData.max_capacity) || formData.max_capacity < 1) {
+                // Εμφάνιση του σφάλματος μέσα στο modal
+                if (modalMessageArea) {
+                    modalMessageArea.innerHTML = `<div class="alert alert-danger">Παρακαλώ εισάγετε μια έγκυρη μέγιστη χωρητικότητα (π.χ. 1 ή μεγαλύτερο).</div>`;
+                } else { // Fallback στο κύριο message area αν το modalMessageArea δεν βρεθεί για κάποιο λόγο
+                    messageArea.innerHTML = `<div class="alert alert-danger">Παρακαλώ εισάγετε μια έγκυρη μέγιστη χωρητικότητα (π.χ. 1 ή μεγαλύτερο).</div>`;
+                }
+                return;
+            }
 
             apiFetch(url, {
                 method: 'POST',
                 body: JSON.stringify(formData)
+            })
+            .then(data => { // ΕΠΙΤΥΧΙΑ
+                messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Τα στοιχεία αποθηκεύτηκαν επιτυχώς.'}</div>`;
+                programModal.hide();
+                fetchAdminPrograms(); // Αυτό θα καθαρίσει το messageArea μέσω της fetchAdminPrograms
+                // Δεν χρειάζεται setTimeout εδώ αν η fetchAdminPrograms καθαρίζει το messageArea
             })
             .then(data => {
                 messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Τα στοιχεία αποθηκεύτηκαν επιτυχώς.'}</div>`;
@@ -1259,6 +1312,10 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error saving program:', error);
+                // Καθαρισμός του modal message area πριν εμφανίσουμε νέα σφάλματα
+                if (modalMessageArea) {
+                    modalMessageArea.innerHTML = '';
+                }
 
                 // Καθαρισμός προηγούμενων is-invalid από όλα τα πεδία της φόρμας
                 const formElements = e.target.elements; // e.target είναι η φόρμα programForm
@@ -1279,9 +1336,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                     errorsList += '</ul>';
-                    messageArea.innerHTML = `<div class="alert alert-danger">${errorMessage}${errorsList}</div>`;
+                    // Εμφάνιση των σφαλμάτων validation μέσα στο modal
+                    if (modalMessageArea) {
+                        modalMessageArea.innerHTML = `<div class="alert alert-danger">${errorMessage}${errorsList}</div>`;
+                    } else { // Fallback
+                        messageArea.innerHTML = `<div class="alert alert-danger">${errorMessage}${errorsList}</div>`;
+                    }
                 } else {
-                    messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
+                    // Εμφάνιση γενικού σφάλματος μέσα στο modal
+                    if (modalMessageArea) {
+                        modalMessageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
+                    } else { // Fallback
+                        messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
+                    }
                 }
             });
         });
