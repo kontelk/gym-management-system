@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const card = `
                             <div class="col-md-6 col-lg-4 mb-4">
                                 <div class="card h-100">
-                                    <div class="card-body d-flex flex-column ${program.type === 'group' ? 'bg-danger-subtle' : 'bg-success-subtle'}">
+                                    <div class="card-body d-flex flex-column ${program.type === 'group' ? 'bg-primary-subtle' : 'bg-success-subtle'}">
                                         <h5 class="card-title"><em>${program.name}</em></h5>
                                         <p class="card-text">${program.description}</p>
                                         <p class="card-text"><small class="text-muted">Τύπος: <strong>${program.type === 'group' ? 'Ομαδικό' : 'Ατομικό'}</strong></small></p>
@@ -622,7 +622,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         let bookedBadgeHtml = '';
                         if (userHasBookedThisSpecificSlot) {
                             // Αν ο χρήστης έχει ήδη κάνει κράτηση για αυτό το slot, εμφανίζουμε μήνυμα "Έχετε κάνει Κράτηση".
-                            bookedBadgeHtml = '<span class="badge bg-danger text-light ms-2">Έχετε κάνει Κράτηση</span>';
+                            bookedBadgeHtml = '<span class="badge bg-dark text-light ms-2">Έχετε κάνει Κράτηση</span>';
                         }
                         const disableButton = slot.available_slots <= 0 || userHasBookingForProgramOnThisDate;
                         let bookButtonHtml = '';
@@ -1129,6 +1129,40 @@ document.addEventListener('DOMContentLoaded', function() {
         const programForm = document.getElementById('program-form');
         const modalMessageArea = document.getElementById('modal-message-area'); // ΝΕΟ: Selector για το message area του modal
 
+        // --- Συνάρτηση για τον έλεγχο της φόρμας ---
+        function validateProgramForm() {
+            let isValid = true;
+            const requiredInputs = programForm.querySelectorAll('[required]');
+            
+            requiredInputs.forEach(input => {
+                input.classList.remove('is-invalid');
+                if (input.value.trim() === '') {
+                    isValid = false;
+                    input.classList.add('is-invalid');
+                }
+            });
+            return isValid;
+        }
+
+        // Βοηθητική συνάρτηση για καθαρισμό των validation states της φόρμας προγράμματος
+        function clearProgramFormValidation(form) {
+            const elements = form.elements;
+            for (let i = 0; i < elements.length; i++) {
+                const element = elements[i];
+                if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA' || element.nodeName === 'SELECT') {
+                    element.classList.remove('is-invalid');
+                    // Βρίσκουμε το επόμενο sibling που είναι το invalid-feedback div
+                    const feedbackDiv = element.nextElementSibling;
+                    if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                        feedbackDiv.textContent = '';
+                    }
+                }
+            }
+            if (modalMessageArea) { // Καθαρισμός και του γενικού χώρου μηνυμάτων του modal
+                modalMessageArea.innerHTML = '';
+            }
+        }
+
         // Φόρτωση των προγραμμάτων
         function fetchAdminPrograms() {
             apiFetch(`${apiBaseUrl}/programs/read_admin.php`)
@@ -1185,6 +1219,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('add-program-btn').addEventListener('click', () => {
             programForm.reset();
             document.getElementById('program-id').value = '';
+            clearProgramFormValidation(programForm); // Καθαρισμός validation
             document.getElementById('modal-title').textContent = 'Προσθήκη Νέου Προγράμματος';
             document.getElementById('status-wrapper').style.display = 'none'; // Κρύβουμε το status για νέα
             if (modalMessageArea) modalMessageArea.innerHTML = ''; // Καθαρισμός μηνυμάτων στο modal
@@ -1199,10 +1234,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = targetLink.getAttribute('data-id');
 
             if (targetLink.classList.contains('edit-btn')) {
+                e.preventDefault();// ***********
                 // Φόρτωση δεδομένων για επεξεργασία
                 apiFetch(`${apiBaseUrl}/programs/read_one.php?id=${id}`)
                     .then(p => {
                         if (p && p.id) {
+                            clearProgramFormValidation(programForm); // Καθαρισμός validation πριν το γέμισμα
                             document.getElementById('program-id').value = p.id;
                             document.getElementById('program-name').value = p.name;
                             document.getElementById('program-description').value = p.description;
@@ -1217,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log(`Program is active: ${p.is_active}`); // Για debugging
                             console.log(`Program max capacity: ${p.max_capacity}`); // Για debugging
                             if (modalMessageArea) modalMessageArea.innerHTML = ''; // Καθαρισμός μηνυμάτων στο modal
-                            debugger;
+                            debugger;//***********
                             programModal.show();
                         } else {
                             messageArea.innerHTML = `<div class="alert alert-warning">${(p && p.message) || 'Δεν βρέθηκε το πρόγραμμα ή τα δεδομένα είναι ελλιπή.'}</div>`;
@@ -1270,9 +1307,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Υποβολή φόρμας
         programForm.addEventListener('submit', e => {
             e.preventDefault();
+            
+            // Ελέγχουμε αν η φόρμα είναι έγκυρη
+            if (!validateProgramForm()) {
+                if (modalMessageArea) {
+                    modalMessageArea.innerHTML = `<div class="alert alert-danger">Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία.</div>`;
+                }
+                return;
+            }
+            // Εάν η φόρμα είναι έγκυρη, προχωράμε με την αποστολή
+            if (modalMessageArea) {
+                modalMessageArea.innerHTML = ''; // Καθαρισμός μηνυμάτων στο modal πριν την αποστολή
+            }
+            clearProgramFormValidation(programForm); // Καθαρισμός τυχόν προηγούμενων validation
+
             const id = document.getElementById('program-id').value;
             const url = id ? `${apiBaseUrl}/programs/update.php` : `${apiBaseUrl}/programs/create.php`;
-            
+            // Συλλογή δεδομένων από τη φόρμα
+            // Χρησιμοποιούμε το id μόνο αν υπάρχει, για να διακρίνουμε μεταξύ δημιουργίας και ενημέρωσης
             const formData = {
                 id: id || undefined, // Στέλνουμε id μόνο αν υπάρχει (για update)
                 name: document.getElementById('program-name').value,
@@ -1283,15 +1335,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             };
             // debugger;
-            // Ελέγχουμε αν το max_capacity είναι έγκυρο
-            if (isNaN(formData.max_capacity) || formData.max_capacity < 1) {
-                // Εμφάνιση του σφάλματος μέσα στο modal
+            // Client-side validation για το max_capacity
+            const maxCapacityInput = document.getElementById('program-max-capacity');
+            if (isNaN(formData.max_capacity) || formData.max_capacity <= 0) { // <= 0 για να πιάνει και το 0
+                maxCapacityInput.classList.add('is-invalid');
+                const feedbackDiv = maxCapacityInput.nextElementSibling;
+                if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                    feedbackDiv.textContent = 'Η μέγιστη χωρητικότητα πρέπει να είναι αριθμός μεγαλύτερος του 0.';
+                }
                 if (modalMessageArea) {
-                    modalMessageArea.innerHTML = `<div class="alert alert-danger">Παρακαλώ εισάγετε μια έγκυρη μέγιστη χωρητικότητα (π.χ. 1 ή μεγαλύτερο).</div>`;
-                } else { // Fallback στο κύριο message area αν το modalMessageArea δεν βρεθεί για κάποιο λόγο
-                    messageArea.innerHTML = `<div class="alert alert-danger">Παρακαλώ εισάγετε μια έγκυρη μέγιστη χωρητικότητα (π.χ. 1 ή μεγαλύτερο).</div>`;
+                    modalMessageArea.innerHTML = `<div class="alert alert-danger">Παρακαλώ διορθώστε τα σφάλματα στη φόρμα.</div>`;
                 }
                 return;
+            } else {
+                // Προληπτικός καθαρισμός αν πέρασε το client-side validation (σε περίπτωση που είχε μείνει από προηγούμενο submit)
+                maxCapacityInput.classList.remove('is-invalid');
+                const feedbackDiv = maxCapacityInput.nextElementSibling;
+                if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                    feedbackDiv.textContent = '';
+                }
             }
 
             apiFetch(url, {
@@ -1304,50 +1366,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetchAdminPrograms(); // Αυτό θα καθαρίσει το messageArea μέσω της fetchAdminPrograms
                 // Δεν χρειάζεται setTimeout εδώ αν η fetchAdminPrograms καθαρίζει το messageArea
             })
-            .then(data => {
-                messageArea.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Τα στοιχεία αποθηκεύτηκαν επιτυχώς.'}</div>`;
-                programModal.hide();
-                fetchAdminPrograms();
-                setTimeout(() => messageArea.innerHTML = '', 4000);
-            })
             .catch(error => {
                 console.error('Error saving program:', error);
-                // Καθαρισμός του modal message area πριν εμφανίσουμε νέα σφάλματα
-                if (modalMessageArea) {
-                    modalMessageArea.innerHTML = '';
-                }
+                // Το clearProgramFormValidation() έχει ήδη καθαρίσει τα πάντα στην αρχή του submit handler.
 
-                // Καθαρισμός προηγούμενων is-invalid από όλα τα πεδία της φόρμας
-                const formElements = e.target.elements; // e.target είναι η φόρμα programForm
-                for (let i = 0; i < formElements.length; i++) {
-                    if (formElements[i].classList) {
-                        formElements[i].classList.remove('is-invalid');
-                    }
-                }
                 // Εμφάνιση σφαλμάτων validation αν υπάρχουν
                 if (error && error.errors) {
-                    let errorMessage = error.message || 'Παρακαλώ διορθώστε τα παρακάτω σφάλματα:';
-                    let errorsList = '<ul>';
-                    for (const field in error.errors) {
-                        errorsList += `<li>${error.errors[field]}</li>`;
-                        const inputElement = document.getElementById(`program-${field.replace('_', '-')}`);
+                    // Εμφάνιση ενός γενικού μηνύματος στο modalMessageArea
+                    if (modalMessageArea) {
+                        modalMessageArea.innerHTML = `<div class="alert alert-danger">Παρακαλώ διορθώστε τα σφάλματα στα παρακάτω πεδία.</div>`;
+                    }
+
+                    for (const fieldKey in error.errors) {
+                        const inputElement = document.getElementById(`program-${fieldKey.replace('_', '-')}`);
                         if (inputElement) {
                             inputElement.classList.add('is-invalid');
+                            const feedbackDiv = inputElement.nextElementSibling;
+                            if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                                feedbackDiv.textContent = error.errors[fieldKey];
+                            }
                         }
                     }
-                    errorsList += '</ul>';
-                    // Εμφάνιση των σφαλμάτων validation μέσα στο modal
-                    if (modalMessageArea) {
-                        modalMessageArea.innerHTML = `<div class="alert alert-danger">${errorMessage}${errorsList}</div>`;
-                    } else { // Fallback
-                        messageArea.innerHTML = `<div class="alert alert-danger">${errorMessage}${errorsList}</div>`;
-                    }
-                } else {
+                } else if (error && error.message) { // Αν δεν υπάρχουν error.errors, αλλά υπάρχει error.message
                     // Εμφάνιση γενικού σφάλματος μέσα στο modal
                     if (modalMessageArea) {
-                        modalMessageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
-                    } else { // Fallback
+                        modalMessageArea.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+                    } else { // Fallback στο κύριο message area αν το modalMessageArea δεν υπάρχει
                         messageArea.innerHTML = `<div class="alert alert-danger">${error.message || 'Προέκυψε κάποιο σφάλμα.'}</div>`;
+                        setTimeout(() => { messageArea.innerHTML = ''; }, 5000);
                     }
                 }
             });
@@ -1491,6 +1537,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const days = ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο', 'Κυριακή'];
             const eventsByDay = Array.from({ length: 7 }, () => []);
             
+            // Λήψη της ημερομηνίας έναρξης (Δευτέρα) της επιλεγμένης εβδομάδας
+            const weekDates = getWeekDates(weekPicker.value);
+            const mondayDate = new Date(weekDates.start + 'T00:00:00'); // Προσθέτουμε T00:00:00 για να διασφαλίσουμε ότι είναι η αρχή της ημέρας τοπικά
+
             eventsToRender.forEach(event => {
                 const dayIndex = (new Date(event.start_time).getDay() + 6) % 7;
                 eventsByDay[dayIndex].push(event);
@@ -1498,7 +1548,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
             for (let i = 0; i < 7; i++) {
                 let dayHtml = `<div class="day-column mb-3"><h4>${days[i]}</h4>`;
-                if(eventsByDay[i].length === 0){
+
+                // Υπολογισμός και μορφοποίηση της τρέχουσας ημερομηνίας
+                const currentDate = new Date(mondayDate);
+                currentDate.setDate(mondayDate.getDate() + i);
+                const formattedDate = currentDate.toLocaleDateString('el-GR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                dayHtml = `<div class="day-column mb-3"><h4><small class="text-muted">${formattedDate} - ${days[i]}</small></h4>`;
+
+                if (eventsByDay[i].length === 0) {
                     dayHtml += `<p class="text-muted small">Κανένα event.</p>`;
                 } else {
                     eventsByDay[i].sort((a,b) => new Date(a.start_time) - new Date(b.start_time));
@@ -1508,7 +1569,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const capacityText = event.max_capacity === null || event.max_capacity === 0 ? 'Απεριόριστες' : event.max_capacity; // Ενημέρωση για null ή 0
                         const cardColorClass = event.program_type === 'group' ? 'bg-primary-subtle' : 'bg-success-subtle';
                         
-                        // **ΝΕΑ ΛΟΓΙΚΗ: Δημιουργία λίστας συμμετεχόντων**
+                        // **Δημιουργία λίστας συμμετεχόντων**
                         let participantsHtml = '<h6 class="fs-6">Συμμετέχοντες:</h6>';
                         if (event.bookings && event.bookings.length > 0) {
                             participantsHtml += '<ul class="list-group mb-0 small">';

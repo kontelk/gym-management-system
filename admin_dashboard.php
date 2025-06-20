@@ -8,7 +8,7 @@ include 'templates/header.php';
     <div class="row">
 
         <div class="col-md-4 mb-3">
-            <div class="card bg-primary-subtle">
+            <div class="card bg-secondary-subtle">
                 <div class="card-body">
                     <h5 class="card-title"><em>Διαχείριση Χρηστών</em></h5>
                     <p class="card-text">Προβολή όλων των χρηστών και έγκριση νέων αιτημάτων εγγραφής.</p>
@@ -20,7 +20,7 @@ include 'templates/header.php';
         </div>
 
         <div class="col-md-4 mb-3">
-            <div class="card bg-primary-subtle">
+            <div class="card bg-secondary-subtle">
                 <div class="card-body">
                     <h5 class="card-title"><em>Διαχείριση Προγραμμάτων</em></h5>
                     <p class="card-text">Προβολή όλων των προγραμμάτων για την διαχείρισή τους.</p>
@@ -32,7 +32,7 @@ include 'templates/header.php';
         </div>
 
         <div class="col-md-4 mb-3">
-            <div class="card bg-primary-subtle">
+            <div class="card bg-secondary-subtle">
                 <div class="card-body">
                     <h5 class="card-title"><em>Χρονοπρογραμματισμός</em></h5>
                     <p class="card-text">Διαχείριση του χρονοπρογραμματισμού των κρατήσεων των χρηστών.</p>
@@ -44,7 +44,7 @@ include 'templates/header.php';
         </div>
 
         <div class="col-md-4 mb-3">
-            <div class="card bg-primary-subtle">
+            <div class="card bg-secondary-subtle">
                 <div class="card-body">
                     <h5 class="card-title"><em>Διαχείριση Ανακοινώσεων</em></h5>
                     <p class="card-text">Δημιουργία, επεξεργασία και διαγραφή νέων και προσφορών για τους χρήστες.</p>
@@ -56,7 +56,7 @@ include 'templates/header.php';
         </div>
 
         <div class="col-md-4 mb-3">
-            <div class="card bg-primary-subtle">
+            <div class="card bg-secondary-subtle">
                 <div class="card-body">
                     <h5 class="card-title"><em>Διαχείριση Γυμναστών</em></h5>
                     <p class="card-text">Προσθήκη, επεξεργασία και διαγραφή των γυμναστών του συστήματος.</p>

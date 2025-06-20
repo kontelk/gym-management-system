@@ -31,11 +31,13 @@ include 'templates/header.php';
                     <div class="mb-3">
                         <label for="program-name" class="form-label">Όνομα (*)</label>
                         <input type="text" class="form-control" id="program-name" required>
+                        <div class="invalid-feedback"></div>
                         <div class="form-text">Συμπληρώστε όνομα προγράμματος</div>
                     </div>
                     <div class="mb-3">
                         <label for="program-description" class="form-label">Περιγραφή (*)</label>
                         <textarea class="form-control" id="program-description" rows="3" required></textarea>
+                        <div class="invalid-feedback"></div>
                         <div class="form-text">Συμπληρώστε περιγραφή του προγράμματος</div>
                     </div>
                     <div class="mb-3">
@@ -44,11 +46,13 @@ include 'templates/header.php';
                             <option value="individual">Ατομικό</option>
                             <option value="group">Ομαδικό</option>
                         </select>
+                        <div class="invalid-feedback"></div>
                         <div class="form-text">Επιλέξτε τον τύπο του προγράμματος</div>
                     </div>
                     <div class="mb-3">
                         <label for="program-max-capacity" class="form-label">Μέγιστη Χωρητικότητα (*)</label>
                         <input type="number" class="form-control" id="program-max-capacity" min="1" value="20" required>
+                        <div class="invalid-feedback"></div>
                         <div class="form-text">Ορίστε τη μέγιστη χωρητικότητα του προγράμματος</div>
                     </div>
                     <div class="mb-3 form-check" id="status-wrapper">
