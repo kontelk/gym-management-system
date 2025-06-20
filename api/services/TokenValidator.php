@@ -23,6 +23,8 @@ class TokenValidator {
         // Λήψη του JWT από το Authorization header
         $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 
+        // Έλεγχος αν το Authorization header υπάρχει
+        // Αν δεν υπάρχει, επιστρέφουμε 401 Unauthorized
         if (!$authHeader) {
             http_response_code(401); // Unauthorized
             echo json_encode(array("message" => "Δεν παρασχέθηκε διακριτικό πρόσβασης (token)."));
@@ -31,13 +33,13 @@ class TokenValidator {
 
         // Το header είναι συνήθως "Bearer <token>". Χρειαζόμαστε μόνο το <token>.
         list($jwt) = sscanf($authHeader, 'Bearer %s');
-
+        
+        // Έλεγχος αν το JWT υπάρχει
         if (!$jwt) {
             http_response_code(401); // Unauthorized
             echo json_encode(array("message" => "Το διακριτικό πρόσβασης (token) έχει λανθασμένη μορφή."));
             exit();
         }
-
         try {
             // Αποκωδικοποίηση του token
             $decoded = JWT::decode($jwt, new Key(JWT_SECRET_KEY, 'HS256'));
@@ -55,4 +57,5 @@ class TokenValidator {
             exit();
         }
     }
+    
 }

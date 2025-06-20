@@ -3,38 +3,6 @@
 include 'templates/header.php';
 ?>
 
-
-<!-- <div class="row justify-content-center">
-    <div class="col-md-6">
-        <h2 class="text-center mb-4">Είσοδος</h2>
-        
-        <form id="login-form">
-            <div class="mb-3">
-                <label for="username" class="form-label">Όνομα Χρήστη</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Κωδικός Πρόσβασης</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-
-            
-
-
-
-            <div class="d-grid">
-                <button type="submit" class="btn btn-primary">Είσοδος</button>
-            </div>
-        </form>
-        
-        <div id="message-area" class="mt-3"></div>
-        
-    </div>
-</div> -->
-
-
-
-
 <!-- Wrapper div για κατακόρυφη και οριζόντια στοίχιση στο κέντρο -->
 <div class="d-flex flex-grow-1 align-items-center justify-content-center py-4">
     <!-- Column div για τον καθορισμό του πλάτους του card -->
@@ -65,7 +33,6 @@ include 'templates/header.php';
         </div>
     </div>
 </div>
-
 
 <?php
 // Συμπερίληψη του footer

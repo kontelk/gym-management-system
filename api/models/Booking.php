@@ -196,10 +196,4 @@ class Booking {
         return false; // Ή πέταξε Exception
     }
 
-
-    
-
-    
-
-
 }

@@ -603,13 +603,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const userBookedEventIds = new Set(userBookings.map(b => parseInt(b.event_id, 10)));
                 console.log('User Bookings:', userBookings);
                 console.log('User booked event IDs:', userBookedEventIds);
-                //debugger; // Για να δούμε τα δεδομένα στο console
 
                 // Έλεγχος αν ο χρήστης έχει ήδη κράτηση για αυτό το πρόγραμμα (pId) σε αυτή την ημερομηνία (date)
                 // Αυτό γίνεται ελέγχοντας αν κάποιο από τα event_id των τρεχόντων slots υπάρχει στις κρατήσεις του χρήστη.
                 const userHasBookingForProgramOnThisDate = slots.some(slot => userBookedEventIds.has(parseInt(slot.event_id, 10)));
                 console.log('User has booking for this program on this date:', userHasBookingForProgramOnThisDate);
-                debugger; // Για να δούμε τα δεδομένα στο console
 
                 if (slots.length === 0) {
                     availabilityResults.innerHTML = `<p class="text-center text-info">Δεν υπάρχει διαθεσιμότητα για την επιλεγμένη ημερομηνία.</p>`;
@@ -1254,7 +1252,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log(`Program is active: ${p.is_active}`); // Για debugging
                             console.log(`Program max capacity: ${p.max_capacity}`); // Για debugging
                             if (modalMessageArea) modalMessageArea.innerHTML = ''; // Καθαρισμός μηνυμάτων στο modal
-                            debugger;//***********
                             programModal.show();
                         } else {
                             messageArea.innerHTML = `<div class="alert alert-warning">${(p && p.message) || 'Δεν βρέθηκε το πρόγραμμα ή τα δεδομένα είναι ελλιπή.'}</div>`;
@@ -1334,7 +1331,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 max_capacity: parseInt(document.getElementById('program-max-capacity').value, 10)
                 
             };
-            // debugger;
             // Client-side validation για το max_capacity
             const maxCapacityInput = document.getElementById('program-max-capacity');
             if (isNaN(formData.max_capacity) || formData.max_capacity <= 0) { // <= 0 για να πιάνει και το 0
@@ -1675,7 +1671,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('End Time:', document.getElementById('event-end-time').value);
             console.log('Trainer ID:', document.getElementById('event-trainer').value);
             console.log('Capacity:', document.getElementById('event-capacity').value);
-            // debugger;
 
             apiFetch(`${apiBaseUrl}/events/create.php`, {
                 method: 'POST',
@@ -1694,7 +1689,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error creating event:', error);
-                debugger;
                 // Χειρισμός σφαλμάτων από τον server (συμπεριλαμβανομένων των validation errors)
                 if (error && error.errors) { // Δομημένα σφάλματα επικύρωσης
                     if (messageAreaModal) {

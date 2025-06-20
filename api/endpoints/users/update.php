@@ -1,4 +1,10 @@
 <?php
+// =================================================================
+// Endpoint: /users/update.php (Protected, Admin Only)
+// Method: POST
+// Χρήση: Ενημερώνει τα στοιχεία ενός υπάρχοντος χρήστη από τον admin.
+// =================================================================
+
 // Endpoint για ενημέρωση χρήστη από τον admin
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
