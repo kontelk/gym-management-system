@@ -1180,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         data.forEach(p => {
                             const programName = p.is_active ? `${p.name}` : `<span class="text-muted" style="opacity: 0.5">${p.name}</span>`;
                             const statusBadge = p.is_active ? 'Ενεργό' : '<span class="badge bg-secondary" style="opacity: 0.5">Ανενεργό</span>';
-                            const programType = p.type === 'group' ? '<span class="badge bg-danger">Ομαδικό</span>' : '<span class="badge bg-success">Ατομικό</span>';
+                            const programType = p.type === 'group' ? '<span class="badge bg-info">Ομαδικό</span>' : '<span class="badge bg-success">Ατομικό</span>';
                             const progranTypeFormatted = p.is_active ? programType : `<span class="text-muted" style="opacity: 0.5">${programType}</span>`;
                             const maxCapacityDisplay = p.is_active ? `${p.max_capacity} άτομα` : `<span class="text-muted" style="opacity: 0.5">${p.max_capacity} άτομα</span>`;
                             const row = `
