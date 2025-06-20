@@ -1,4 +1,10 @@
-<?php // Endpoint για δημιουργία νέου προγράμματος
+<?php 
+// =================================================================
+// Endpoint: /programs/create.php (Protected, Admin Only)
+// Method: POST
+// Χρήση: Δημιουργεί ένα νέο πρόγραμμα.
+// =================================================================
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");

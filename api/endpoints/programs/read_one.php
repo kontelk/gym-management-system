@@ -1,4 +1,10 @@
 <?php
+// =================================================================
+// Endpoint: /programs/read_one.php (Public)
+// Method: GET
+// Description: Retrieve a program by its ID
+// =================================================================
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
@@ -18,12 +24,7 @@ $program = new Program($db);
 $program->id = $program_id;
 $program->readOne();
 
-// if ($program->name != null) {
-//     $program_arr = ["id" => $program->id, "name" => $program->name, "description" => $program->description, "type" => $program->type];
-//     http_response_code(200);
-//     echo json_encode($program_arr, JSON_UNESCAPED_UNICODE);
-// } else {
-
+// Ελέγχουμε αν το πρόγραμμα υπάρχει
 if ($program->name != null) {
     // Προσθέτουμε το is_active στον πίνακα που επιστρέφουμε
     $program_arr = [

@@ -1,4 +1,10 @@
 <?php
+// =================================================================
+// Endpoint: /users/delete.php (Protected, Admin Only)
+// Method: POST
+// Χρήση: Διαγράφει έναν χρήστη από τον admin.
+// =================================================================
+
 // Endpoint για διαγραφή χρήστη από τον admin
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");

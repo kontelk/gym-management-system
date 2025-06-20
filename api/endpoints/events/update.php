@@ -3,7 +3,7 @@
 // Endpoint: /events/update.php (Protected, Admin Only)
 // Method: POST
 // Περιγραφή: Ενημερώνει ένα υπάρχον event.
-// Η χωρητικότητα (capacity) είναι υποχρεωτική και πρέπει να είναι θετικός ακέραιος.
+// Η χωρητικότητα (max_capacity) είναι υποχρεωτική και πρέπει να είναι θετικός ακέραιος.
 // =================================================================
 
 header("Access-Control-Allow-Origin: *");
@@ -32,7 +32,7 @@ if (
     !empty($data->date) &&
     !empty($data->start_time) &&
     !empty($data->end_time) &&
-    isset($data->capacity) && filter_var($data->capacity, FILTER_VALIDATE_INT) && (int)$data->capacity > 0
+    isset($data->max_capacity) && filter_var($data->max_capacity, FILTER_VALIDATE_INT) && (int)$data->max_capacity > 0
 ) {
     $event->id = $data->id;
     $event->program_id = $data->program_id;
@@ -40,7 +40,7 @@ if (
     $event->start_time = $data->start_time;
     $event->end_time = $data->end_time;
     $event->trainer_id = !empty($data->trainer_id) ? $data->trainer_id : null;
-    $event->capacity = (int)$data->capacity;
+    $event->max_capacity = (int)$data->max_capacity;
 
     if ($event->update()) { // Υποθέτουμε ότι υπάρχει η μέθοδος update() στο μοντέλο Event
         http_response_code(200);

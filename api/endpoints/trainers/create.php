@@ -1,4 +1,10 @@
 <?php
+// =================================================================
+// Endpoint: /trainers/create.php (Protected, Admin Only)
+// Method: POST
+// Χρήση: Δημιουργεί έναν νέο γυμναστή.
+// =================================================================
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");

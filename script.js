@@ -1750,19 +1750,35 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (messageAreaSchedule) {
                             messageAreaSchedule.innerHTML = `<div class="alert alert-success">${(data && data.message) || 'Το event διαγράφηκε επιτυχώς.'}</div>`;
                             setTimeout(() => { messageAreaSchedule.innerHTML = ''; }, 4000);
+                        } else { // Fallback, αν δεν υπάρχει συγκεκριμένο message area
+                           alert((data && data.message) || 'Το event διαγράφηκε επιτυχώς.'); // Εμφάνιση απλού alert
+                        }
+                        // Προσθήκη: Ελέγχουμε αν πρέπει να κάνουμε refresh τον πίνακα
+                        if (data && data.refresh) {
+                           const weekDates = getWeekDates(weekPicker.value);
+                           fetchSchedule(weekDates.start, weekDates.end);
                         } else {
-                            alert((data && data.message) || 'Το event διαγράφηκε επιτυχώς.');
+                           renderSchedule(); // Απλά επανασχεδιάζουμε αν δεν θέλουμε πλήρη ανανέωση
                         }
                            const weekDates = getWeekDates(weekPicker.value);
                            fetchSchedule(weekDates.start, weekDates.end);
                     })
                     .catch(error => {
                         console.error('Error deleting event:', error);
+                        let errorMessage = 'Προέκυψε σφάλμα κατά τη διαγραφή.';
+
+                        // Ελέγχουμε αν το σφάλμα είναι SyntaxError από JSON parsing
+                        if (error instanceof SyntaxError) {
+                            errorMessage = 'Σφάλμα επικοινωνίας με τον server. Η απάντηση δεν ήταν έγκυρη.';
+                            console.error('Raw error:', error); // Καταγραφή του αρχικού SyntaxError
+                        } else if (error && error.message) {
+                            // Χρησιμοποιούμε το μήνυμα από το structured error object που επιστρέφει η apiFetch
+                            errorMessage = `Σφάλμα διαγραφής event: ${error.message}`;
+                        }
+
                         if (messageAreaSchedule) {
-                            messageAreaSchedule.innerHTML = `<div class="alert alert-danger">Σφάλμα διαγραφής event: ${error.message || 'Προέκυψε σφάλμα.'}</div>`;
+                            messageAreaSchedule.innerHTML = `<div class="alert alert-danger">${errorMessage}</div>`;
                             setTimeout(() => { messageAreaSchedule.innerHTML = ''; }, 4000);
-                        } else {
-                           alert(`Σφάλμα κατά τη διαγραφή του event: ${error.message || 'Προέκυψε σφάλμα.'}`);
                         }
                     });
                 }

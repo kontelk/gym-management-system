@@ -51,7 +51,8 @@ class User {
      * @return void
      */
     public function readOne() {
-        $query = "SELECT id, username, email, first_name, last_name, country, city, address
+        $query = "SELECT id, username, email, first_name, last_name, country, city, address,
+                  role_id, status
                   FROM " . $this->table_name . "
                   WHERE id = :id
                   LIMIT 1";
@@ -71,8 +72,10 @@ class User {
             $this->country = $row['country'];
             $this->city = $row['city'];
             $this->address = $row['address'];
+            $this->role_id = $row['role_id'];
+            $this->status = $row['status'];   // Now available
         }
-    }    
+    }
 
     /**
      * Ελέγχει και δημιουργεί μια νέα εγγραφή χρήστη.

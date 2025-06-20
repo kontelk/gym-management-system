@@ -1,4 +1,10 @@
-<?php // Endpoint για τον admin να βλέπει ΟΛΑ τα προγράμματα (και τα ανενεργά)
+<?php 
+// =================================================================
+// Endpoint: /programs/read_admin.php (Protected, Admin Only)
+// Method: GET
+// Χρήση: Επιστρέφει όλα τα προγράμματα για τον admin, συμπεριλαμβανομένων των ανενεργών.
+// =================================================================
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 include_once __DIR__ . '/../../core/Database.php';

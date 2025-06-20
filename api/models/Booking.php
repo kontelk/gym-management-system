@@ -182,6 +182,21 @@ class Booking {
         return ['success' => false, 'message' => 'Προέκυψε σφάλμα κατά την ακύρωση.'];
     }
 
+
+
+
+    // Στην κλάση Booking (api/objects/booking.php)
+    public function deleteByEvent() {
+        $query = "DELETE FROM " . $this->table_name . " WHERE event_id = :event_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':event_id', $this->event_id);
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false; // Ή πέταξε Exception
+    }
+
+
     
 
     

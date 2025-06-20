@@ -1,4 +1,11 @@
 <?php
+
+// =================================================================
+// Endpoint: /announcements/create.php (Protected, Admin Only)
+// Method: POST
+// Χρήση: Δημιουργεί μια νέα ανακοίνωση.
+// =================================================================
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");

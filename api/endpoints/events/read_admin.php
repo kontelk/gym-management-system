@@ -1,4 +1,10 @@
 <?php
+// =================================================================
+// Endpoint: /events/read_admin.php (Protected, Admin Only)
+// Method: GET
+// Χρήση: Διαβάζει όλα τα events (προγραμματισμένες συνεδρίες) για διαχείριση από τον admin.
+// =================================================================
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 include_once __DIR__ . '/../../core/Database.php';

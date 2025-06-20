@@ -1,4 +1,10 @@
 <?php
+// =================================================================
+// Endpoint: /trainers/read.php (Public)
+// Method: GET
+// Χρήση: Επιστρέφει τη λίστα των εκπαιδευτών.
+// =================================================================
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 include_once __DIR__ . '/../../core/Database.php';

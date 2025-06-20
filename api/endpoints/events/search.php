@@ -1,4 +1,10 @@
 <?php
+// =================================================================
+// Endpoint: /events/search.php (Public)
+// Method: GET
+// Χρήση: Αναζητά events (προγραμματισμένες συνεδρίες) σε συγκεκριμένη χρονική περίοδο.
+// =================================================================
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
@@ -47,10 +53,6 @@ $num = $stmt->rowCount();
 if ($num > 0) {
     $events_arr = array();
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        // Για τα ατομικά, το available_slots θα είναι πάντα null, το αλλάζουμε για το UI
-        // if ($row['available_slots'] === null) {
-        //     $row['available_slots'] = 'Απεριόριστες';
-        // }
         array_push($events_arr, $row);
     }
     http_response_code(200);

@@ -30,11 +30,6 @@ $data = json_decode(file_get_contents("php://input"));
 
 // Έλεγχος ότι τα δεδομένα είναι πλήρη
 if (
-    // !empty($data->id) &&
-    // !empty($data->name) &&
-    // !empty($data->type) &&
-    // isset($data->is_active) // Το is_active μπορεί να είναι false, οπότε ελέγχουμε με isset
-
     isset($data->id, $data->name, $data->description, $data->type, $data->is_active, $data->max_capacity) &&
     filter_var($data->id, FILTER_VALIDATE_INT) !== false &&
     trim($data->name) !== '' &&
