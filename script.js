@@ -235,9 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // ... (κώδικας για συλλογή username/password)
 
             const username = document.getElementById('username').value;
-            console.log(username);
             const password = document.getElementById('password').value;
-            console.log(password);
 
             // Δεδομένα που θα στείλουμε στο API
             const loginData = {
