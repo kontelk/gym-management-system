@@ -1,4 +1,4 @@
-# gym_management_1
+# gym-management-system
 
 ## Olympus Gym - Management Application
 
