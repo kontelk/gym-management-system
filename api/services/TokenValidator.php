@@ -3,9 +3,14 @@
 // Service για την επικύρωση του JSON Web Token
 // =================================================================
 
+// Φορτώνουμε το bootstrap αρχείο για να ρυθμίσουμε το περιβάλλον
+// Αυτό θα φορτώσει τις ρυθμίσεις, τη βάση δεδομένων και τα μοντέλα
+// Το bootstrap.php πρέπει να βρίσκεται στο φάκελο api/
+require_once __DIR__ . '/../bootstrap.php';
 // Απαιτείται ο autoloader του Composer για να βρει την κλάση JWT
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once API_ROOT . '/../vendor/autoload.php';
 
+// Συμπεριλαμβάνουμε τις ρυθμίσεις για το JWT
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -18,7 +23,7 @@ class TokenValidator {
      */
     public static function validate() {
         // Συμπερίληψη των ρυθμίσεων για το JWT
-        include_once __DIR__ . '/../config/app_config.php';
+        //include_once __DIR__ . '/../config/app_config.php';
 
         // Λήψη του JWT από το Authorization header
         $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';

@@ -5,16 +5,19 @@
 // Περιγραφή: Επιστρέφει ένα νέο JWT με νέα ημερομηνία λήξης.
 // =================================================================
 
+// Φορτώνουμε το bootstrap αρχείο για να ρυθμίσουμε το περιβάλλον
+// Αυτό θα φορτώσει τις ρυθμίσεις, τη βάση δεδομένων και τα μοντέλα
+// Το bootstrap.php πρέπει να βρίσκεται στο φάκελο api/
+require_once __DIR__ . '/../../bootstrap.php';
+// Απαιτείται ο autoloader του Composer για να βρει την κλάση JWT
+require_once API_ROOT . '/../vendor/autoload.php';
+
+// Απαιτούμενες κεφαλίδες
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-// Συμπερίληψη των απαραίτητων αρχείων
-include_once __DIR__ . '/../../config/app_config.php'; // Υποθέτοντας ότι μετονομάσατε το database.php
-include_once __DIR__ . '/../../services/TokenValidator.php';
-require_once __DIR__ . '/../../../vendor/autoload.php';
 
 use Firebase\JWT\JWT;
 

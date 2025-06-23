@@ -6,16 +6,19 @@
 // Απαιτεί: Έγκυρο JWT στο Authorization header.
 // =================================================================
 
+// Φορτώνουμε το bootstrap αρχείο για να ρυθμίσουμε το περιβάλλον
+// Αυτό θα φορτώσει τις ρυθμίσεις, τη βάση δεδομένων και τα μοντέλα
+// Το bootstrap.php πρέπει να βρίσκεται στο φάκελο api/
+require_once __DIR__ . '/../../bootstrap.php';
+// Συμπερίληψη άλλων απαραίτητων αρχείων
+include_once API_ROOT . '/models/User.php';
+
 // Απαιτούμενες κεφαλίδες
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Συμπερίληψη αρχείων
-include_once __DIR__ . '/../../core/Database.php';
-include_once __DIR__ . '/../../models/User.php';
-include_once __DIR__ . '/../../services/TokenValidator.php';
 
 // --- Έλεγχos Αυθεντικοποίησης ---
 // Καλεί τον validator. Αν το token δεν είναι έγκυρο, η εκτέλεση θα σταματήσει εκεί.

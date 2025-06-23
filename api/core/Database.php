@@ -2,8 +2,16 @@
 // =================================================================
 // Κλάση Singleton για τη διαχείριση της σύνδεσης με τη Βάση Δεδομένων
 // =================================================================
+// Φόρτωση των ρυθμίσεων της εφαρμογής
+require_once __DIR__ . '/../config/config.php';
 
 class Database {
+
+    // Χρήση των σταθερών από το αρχείο config
+    // private $host = DB_HOST;
+    // private $db_name = DB_NAME;
+    // private $username = DB_USER;
+    // private $password = DB_PASS;
     // Αποθηκεύει το μοναδικό instance της κλάσης.
     private static $instance = null;
     
@@ -16,7 +24,7 @@ class Database {
      */
     private function __construct() {
         // Συμπεριλαμβάνουμε το αρχείο ρυθμίσεων.
-        require_once __DIR__ . '/../config/app_config.php';
+        //require_once __DIR__ . '/../config/app_config.php';
 
         // DSN (Data Source Name) string για τη σύνδεση.
         $dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=utf8mb4';

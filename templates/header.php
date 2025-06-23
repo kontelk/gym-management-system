@@ -1,14 +1,27 @@
+<?php
+// Φορτώνουμε το σύστημα ρυθμίσεων του PHP
+require_once __DIR__ . '/../api/config/config.php';
+?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 1. Δυναμική προσθήκη του <base> tag -->
+    <base href="<?php echo APP_BASE_HREF; ?>">
+
     <title>Olympus Gym</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="favicon.ico">
+
+    <!-- 2. Δυναμική προσθήκη του API URL για την JavaScript -->
+    <script>
+        const API_BASE_URL = '<?php echo API_BASE_PATH; ?>';
+    </script>
 </head>
 
 <body class="<?php echo $body_class ?? ''; ?>">

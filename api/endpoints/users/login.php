@@ -5,6 +5,15 @@
 // Χρήση: Επιτρέπει στους χρήστες να συνδεθούν και να λάβουν ένα JWT.
 // =================================================================
 
+// Φορτώνουμε το bootstrap αρχείο για να ρυθμίσουμε το περιβάλλον
+// Αυτό θα φορτώσει τις ρυθμίσεις, τη βάση δεδομένων και τα μοντέλα
+// Το bootstrap.php πρέπει να βρίσκεται στο φάκελο api/
+require_once __DIR__ . '/../../bootstrap.php';
+// Συμπερίληψη άλλων απαραίτητων αρχείων
+include_once API_ROOT . '/models/User.php';
+// Απαιτείται ο autoloader του Composer για να βρει την κλάση JWT
+require_once API_ROOT . '/../vendor/autoload.php';
+
 // Απαιτούμενες κεφαλίδες
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
@@ -12,12 +21,6 @@ header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Συμπερίληψη αρχείων
-include_once __DIR__ . '/../../core/Database.php';
-include_once __DIR__ . '/../../models/User.php';
-include_once __DIR__ . '/../../config/app_config.php'; // Περιέχει τις JWT ρυθμίσεις
-// Συμπερίληψη του autoloader του Composer
-require_once __DIR__ . '/../../../vendor/autoload.php';
 
 // Χρήση της κλάσης JWT από τη βιβλιοθήκη
 use Firebase\JWT\JWT;

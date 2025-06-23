@@ -5,9 +5,15 @@
 // Χρήση: Επιστρέφει τη λίστα των εκπαιδευτών.
 // =================================================================
 
+// Φορτώνουμε το bootstrap αρχείο για να ρυθμίσουμε το περιβάλλον
+// Αυτό θα φορτώσει τις ρυθμίσεις, τη βάση δεδομένων και τα μοντέλα
+// Το bootstrap.php πρέπει να βρίσκεται στο φάκελο api/
+require_once __DIR__ . '/../../bootstrap.php';
+
+// Απαιτούμενες κεφαλίδες
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-include_once __DIR__ . '/../../core/Database.php';
+
 
 $database = Database::getInstance();
 $db = $database->getConnection();

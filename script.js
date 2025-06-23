@@ -1,8 +1,9 @@
 // Περιμένουμε να φορτωθεί πλήρως το HTML για να εκτελέσουμε τον κώδικα
 document.addEventListener('DOMContentLoaded', function() {
 
-    const apiBaseUrl = '/api/endpoints'; // Βασικό URL του API μας
-
+    // const apiBaseUrl = '/api/endpoints'; // Βασικό URL του API μας - ΠΛΕΟΝ ΔΕΝ ΧΡΕΙΑΖΕΤΑΙ
+    // Η μεταβλητή API_BASE_URL ορίζεται πλέον δυναμικά στο header.php
+    // και είναι διαθέσιμη καθολικά σε αυτό το script.
 
 
     
@@ -212,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('jwt-timer')?.addEventListener('click', () => {
         // if (!confirm('Θέλετε να ανανεώσετε τον χρόνο της συνδεσής σας;')) return;
         // Η apiFetch θα στείλει αυτόματα το υπάρχον token στο header Authorization
-        apiFetch(`${apiBaseUrl}/users/refresh_token.php`, { method: 'POST' }) // Προσθέτουμε method: 'POST' αν το API το απαιτεί για refresh
+        apiFetch(`${API_BASE_URL}/users/refresh_token.php`, { method: 'POST' }) // Προσθέτουμε method: 'POST' αν το API το απαιτεί για refresh
             .then(data => {
                 if (data.jwt) {
                     localStorage.setItem('jwt', data.jwt); // Αποθήκευση του νέου token
@@ -245,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             // Κλήση στο API για login
-            apiFetch(`${apiBaseUrl}/users/login.php`, {
+            apiFetch(`${API_BASE_URL}/users/login.php`, {
                 method: 'POST',
                 body: JSON.stringify(loginData) // Χρήση του loginData που ορίστηκε παραπάνω
             })
@@ -405,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             // Κλήση στο δικό μας API για την εγγραφή
-            apiFetch(`${apiBaseUrl}/users/register.php`, {
+            apiFetch(`${API_BASE_URL}/users/register.php`, {
                 method: 'POST',
                 body: JSON.stringify(registerData)
             })
@@ -459,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Προαιρετικά: Εμφάνιση μηνύματος φόρτωσης
         programsContainer.innerHTML = '<p class="text-center">Φόρτωση προγραμμάτων...</p>';
 
-        apiFetch(`${apiBaseUrl}/programs/read.php`)
+        apiFetch(`${API_BASE_URL}/programs/read.php`)
             .then(data => {
                 // Case 1: Η απάντηση είναι αντικείμενο με μήνυμα (π.χ. "Δεν βρέθηκαν προγράμματα")
                 if (data && data.message && !Array.isArray(data)) {
@@ -552,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Φόρτωση του ονόματος του προγράμματος
             // Η apiFetch θα στείλει το token αν υπάρχει, αλλά για read_one προγράμματος μπορεί να μην είναι απαραίτητο.
             // Αν το endpoint είναι δημόσιο, η apiFetch θα λειτουργήσει κανονικά.
-            apiFetch(`${apiBaseUrl}/programs/read_one.php?id=${programId}`)
+            apiFetch(`${API_BASE_URL}/programs/read_one.php?id=${programId}`)
                 .then(data => {
                     if (data.name) {
                         programTitleEl.textContent = `Κράτηση για: ${data.name}`;
@@ -578,8 +579,8 @@ document.addEventListener('DOMContentLoaded', function() {
             availabilityResults.innerHTML = `<p class="text-center">Αναζήτηση διαθεσιμότητας...</p>`;
 
             Promise.all([
-                apiFetch(`${apiBaseUrl}/events/search.php?program_id=${pId}&date=${date}`),
-                apiFetch(`${apiBaseUrl}/bookings/read_by_user.php`) // Φέρνουμε όλες τις κρατήσεις του χρήστη
+                apiFetch(`${API_BASE_URL}/events/search.php?program_id=${pId}&date=${date}`),
+                apiFetch(`${API_BASE_URL}/bookings/read_by_user.php`) // Φέρνουμε όλες τις κρατήσεις του χρήστη
             ])
             .then(([slotsData, userBookingsData]) => {
                 availabilityResults.innerHTML = ''; // Καθαρισμός
@@ -666,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- Συνάρτηση για δημιουργία κράτησης ---
         function createBooking(eId) {
             // Η apiFetch θα προσθέσει αυτόματα Content-Type και Authorization headers
-            apiFetch(`${apiBaseUrl}/bookings/create.php`, {
+            apiFetch(`${API_BASE_URL}/bookings/create.php`, {
                 method: 'POST',
                 body: JSON.stringify({ event_id: eId })
             })
@@ -703,7 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function fetchMyBookings() {
             bookingsContainer.innerHTML = '<tr><td colspan="4" class="text-center">Φόρτωση κρατήσεων...</td></tr>';
-            apiFetch(`${apiBaseUrl}/bookings/read_by_user.php`)
+            apiFetch(`${API_BASE_URL}/bookings/read_by_user.php`)
             .then(data => {
                 bookingsContainer.innerHTML = '';
                 // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
@@ -774,7 +775,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // --- Συνάρτηση για ακύρωση κράτησης ---
         function cancelBooking(bookingId) {
-            apiFetch(`${apiBaseUrl}/bookings/cancel.php`, {
+            apiFetch(`${API_BASE_URL}/bookings/cancel.php`, {
                 method: 'POST',
                 body: JSON.stringify({ booking_id: bookingId })
             })
@@ -824,7 +825,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- Φόρτωση χρηστών σε αναμονή ---
             function fetchPendingUsers() {
                 // Η apiFetch θα προσθέσει αυτόματα το Authorization header
-                apiFetch(`${apiBaseUrl}/users/read_pending.php`)
+                apiFetch(`${API_BASE_URL}/users/read_pending.php`)
                     .then(data => {
                         pendingUsersTbody.innerHTML = '';
                         // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
@@ -872,7 +873,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 //  fetch(`${apiBaseUrl}/users/read.php`, { headers: { 'Authorization': `Bearer ${token}` } })
                 //     .then(res => res.json())
                 // Η apiFetch θα προσθέσει αυτόματα το Authorization header
-                apiFetch(`${apiBaseUrl}/users/read.php`)
+                apiFetch(`${API_BASE_URL}/users/read.php`)
                     .then(data => {
                         allUsersTbody.innerHTML = '';
                         // if (data.message) {
@@ -959,7 +960,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (targetLink.classList.contains('edit-btn')) {
 
                     // Χρήση της apiFetch για να πάρουμε τα τρέχοντα δεδομένα του χρήστη
-                    apiFetch(`${apiBaseUrl}/users/read_one_admin.php?id=${userId}`)
+                    apiFetch(`${API_BASE_URL}/users/read_one_admin.php?id=${userId}`)
                     .then(data => {
                         if(data.id) {
                             // Γέμισμα της φόρμας του modal
@@ -1011,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Συνάρτηση για έγκριση χρήστη
             function approveUser(userId) {
-                apiFetch(`${apiBaseUrl}/users/approve.php`, {
+                apiFetch(`${API_BASE_URL}/users/approve.php`, {
                     method: 'POST',
                     body: JSON.stringify({ user_id: userId, role_id: 2 }) // Εγκρίνουμε πάντα ως registered_user (ID=2)
                 })
@@ -1030,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Συνάρτηση για την απορριψη χρήστη
             function declineUser(userId) {
-                apiFetch(`${apiBaseUrl}/users/decline.php`, {
+                apiFetch(`${API_BASE_URL}/users/decline.php`, {
                     method: 'POST',
                     body: JSON.stringify({ user_id: userId}) // Εγκρίνουμε πάντα ως registered_user (ID=2)
                 })
@@ -1048,7 +1049,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             function deleteUser(id) {
-                apiFetch(`${apiBaseUrl}/users/delete.php`, {
+                apiFetch(`${API_BASE_URL}/users/delete.php`, {
                     method: 'POST',
                     body: JSON.stringify({ id: id })
                 })
@@ -1085,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Ελέγχουμε αν το ID υπάρχει για να αποφασίσουμε αν είναι ενημέρωση ή δημιουργία
                 // Η apiFetch θα προσθέσει αυτόματα Content-Type και Authorization headers
-                apiFetch(`${apiBaseUrl}/users/update.php`, {
+                apiFetch(`${API_BASE_URL}/users/update.php`, {
                     method: 'POST',
                     body: JSON.stringify(formData)
                 })
@@ -1163,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Φόρτωση των προγραμμάτων
         function fetchAdminPrograms() {
-            apiFetch(`${apiBaseUrl}/programs/read_admin.php`)
+            apiFetch(`${API_BASE_URL}/programs/read_admin.php`)
                 .then(data => {
                     programsTbody.innerHTML = '';
                     // Καθαρισμός του κύριου message area της σελίδας κατά την επαναφόρτωση
@@ -1234,7 +1235,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (targetLink.classList.contains('edit-btn')) {
                 e.preventDefault();// ***********
                 // Φόρτωση δεδομένων για επεξεργασία
-                apiFetch(`${apiBaseUrl}/programs/read_one.php?id=${id}`)
+                apiFetch(`${API_BASE_URL}/programs/read_one.php?id=${id}`)
                     .then(p => {
                         if (p && p.id) {
                             clearProgramFormValidation(programForm); // Καθαρισμός validation πριν το γέμισμα
@@ -1265,7 +1266,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (targetLink.classList.contains('disable-btn')) {
                 // Επιβεβαίωση απενεργοποίησης
                 if (confirm('Είστε σίγουροι ότι θέλετε να απενεργοποιήσετε αυτό το πρόγραμμα;')) {
-                    apiFetch(`${apiBaseUrl}/programs/disable.php`, {
+                    apiFetch(`${API_BASE_URL}/programs/disable.php`, {
                         method: 'POST',
                         body: JSON.stringify({ id: id })
                     })
@@ -1283,7 +1284,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (targetLink.classList.contains('delete-btn')) {
                 // Επιβεβαίωση διαγραφής
                 if (confirm('Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτό το πρόγραμμα; ΠΡΟΣΟΧΗ: Με την ενέργεια αυτή θα διαγραφούν οριστικά και όλα τα προγραμματισμένα events καθώς και οι κρατήσεις που σχετίζονται με αυτό. Η ενέργεια είναι μη αναστρέψιμη.')) {
-                    apiFetch(`${apiBaseUrl}/programs/delete.php`, {
+                    apiFetch(`${API_BASE_URL}/programs/delete.php`, {
                         method: 'POST',
                         body: JSON.stringify({ id: id })
                     })
@@ -1319,7 +1320,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearProgramFormValidation(programForm); // Καθαρισμός τυχόν προηγούμενων validation
 
             const id = document.getElementById('program-id').value;
-            const url = id ? `${apiBaseUrl}/programs/update.php` : `${apiBaseUrl}/programs/create.php`;
+            const url = id ? `${API_BASE_URL}/programs/update.php` : `${API_BASE_URL}/programs/create.php`;
             // Συλλογή δεδομένων από τη φόρμα
             // Χρησιμοποιούμε το id μόνο αν υπάρχει, για να διακρίνουμε μεταξύ δημιουργίας και ενημέρωσης
             const formData = {
@@ -1443,7 +1444,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const trainerSelect = document.getElementById('event-trainer');
 
             // Φόρτωση προγραμμάτων (μόνο τα ενεργά)
-            apiFetch(`${apiBaseUrl}/programs/read_admin.php`) // Δεν χρειάζεται token header, η apiFetch το χειρίζεται
+            apiFetch(`${API_BASE_URL}/programs/read_admin.php`) // Δεν χρειάζεται token header, η apiFetch το χειρίζεται
                 .then(data => {
                     programSelect.innerHTML = '<option value="">Επιλέξτε Πρόγραμμα...</option>';
                     if (Array.isArray(data)) {
@@ -1460,7 +1461,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
             // Φόρτωση γυμναστών
-            apiFetch(`${apiBaseUrl}/trainers/read.php`) // Δημόσιο endpoint, η apiFetch δεν θα στείλει token αν δεν υπάρχει
+            apiFetch(`${API_BASE_URL}/trainers/read.php`) // Δημόσιο endpoint, η apiFetch δεν θα στείλει token αν δεν υπάρχει
                 .then(data => {
                     trainerSelect.innerHTML = '<option value="">Επιλέξτε Γυμναστή (Προαιρετικό)</option>';
                     if (Array.isArray(data)) {
@@ -1493,7 +1494,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         function fetchSchedule(start, end) {
             scheduleContainer.innerHTML = `<p class="text-center">Φόρτωση χρονοπρογραμματισμού...</p>`;
-            apiFetch(`${apiBaseUrl}/events/read_admin.php?start=${start}&end=${end}`) // Δεν χρειάζεται token header
+            apiFetch(`${API_BASE_URL}/events/read_admin.php?start=${start}&end=${end}`) // Δεν χρειάζεται token header
                 .then(data => {
                     if (data && data.message && !Array.isArray(data)) {
                         currentScheduleData = []; // Αν υπάρχει μήνυμα, δεν υπάρχουν events
@@ -1672,7 +1673,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Trainer ID:', document.getElementById('event-trainer').value);
             console.log('Capacity:', document.getElementById('event-capacity').value);
 
-            apiFetch(`${apiBaseUrl}/events/create.php`, {
+            apiFetch(`${API_BASE_URL}/events/create.php`, {
                 method: 'POST',
                 body: JSON.stringify(formData)
             })
@@ -1736,7 +1737,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if(e.target.classList.contains('delete-event-btn')) {
                 const eventId = e.target.getAttribute('data-id');
                 if(confirm('Είστε σίγουροι; Αυτή η ενέργεια θα διαγράψει και τις υπάρχουσες κρατήσεις για το event.')) {
-                    apiFetch(`${apiBaseUrl}/events/delete.php`, {
+                    apiFetch(`${API_BASE_URL}/events/delete.php`, {
                         method: 'POST',
                         body: JSON.stringify({id: eventId})
                     })
@@ -1833,7 +1834,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Χρήση της apiFetch. Δεν χρειάζεται πλέον να περνάμε το header του token.
             // Το endpoint /read.php είναι δημόσιο, αλλά εδώ το καλούμε για να πάρουμε τη λίστα για διαχείριση.
             // Η apiFetch θα στείλει το token αν υπάρχει, το οποίο μπορεί να χρησιμοποιηθεί από το API για να επιστρέψει π.χ. και μη δημοσιευμένες.
-            apiFetch(`${apiBaseUrl}/announcements/read.php`) 
+            apiFetch(`${API_BASE_URL}/announcements/read.php`) 
                 .then(data => {
                     announcementsTbody.innerHTML = '';
                     if (data && data.message && !Array.isArray(data)) {
@@ -1880,7 +1881,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (targetLink.classList.contains('edit-btn')) {
                 // **ΑΛΛΑΓΗ 2: Χρήση της apiFetch για την ανάκτηση μιας εγγραφής.**
-                apiFetch(`${apiBaseUrl}/announcements/read_one.php?id=${id}`) // Δεν χρειάζεται token header
+                apiFetch(`${API_BASE_URL}/announcements/read_one.php?id=${id}`) // Δεν χρειάζεται token header
                 .then(data => {
                     if(data.id) {
                         document.getElementById('announcement-id').value = data.id;
@@ -1899,7 +1900,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (targetLink.classList.contains('delete-btn')) {
                 if(confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε οριστικά αυτή την ανακοίνωση;')){
                     // **ΑΛΛΑΓΗ 3: Χρήση της apiFetch για τη διαγραφή.**
-                    apiFetch(`${apiBaseUrl}/announcements/delete.php`, {
+                    apiFetch(`${API_BASE_URL}/announcements/delete.php`, {
                         method: 'POST',
                         // headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, // Δεν χρειάζεται
                         body: JSON.stringify({ id: id })
@@ -1921,7 +1922,7 @@ document.addEventListener('DOMContentLoaded', function() {
         announcementForm.addEventListener('submit', e => {
             e.preventDefault();
             const id = document.getElementById('announcement-id').value;
-            const url = id ? `${apiBaseUrl}/announcements/update.php` : `${apiBaseUrl}/announcements/create.php`;
+            const url = id ? `${API_BASE_URL}/announcements/update.php` : `${API_BASE_URL}/announcements/create.php`;
             
             const formData = {
                 id: id || undefined,
@@ -1987,7 +1988,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Προσθήκη μηνύματος φόρτωσης (λευκό χρώμα)
         announcementsContainer.innerHTML = '<p class="text-center text-white">Φόρτωση ανακοινώσεων...</p>';
 
-        apiFetch(`${apiBaseUrl}/announcements/read.php`)
+        apiFetch(`${API_BASE_URL}/announcements/read.php`)
             .then(data => {
                 announcementsContainer.innerHTML = ''; // Καθαρισμός του container
                 
@@ -2045,7 +2046,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function fetchTrainers() {
             // Χρησιμοποιούμε το δημόσιο endpoint που φέρνει όλους τους γυμναστές
-            apiFetch(`${apiBaseUrl}/trainers/read.php`)
+            apiFetch(`${API_BASE_URL}/trainers/read.php`)
                 .then(data => {
                     trainersTbody.innerHTML = '';
                     // Ελέγχουμε αν η απάντηση περιέχει μήνυμα (π.χ. σφάλμα ή "δεν βρέθηκαν")
@@ -2097,7 +2098,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (targetLink.classList.contains('edit-trainer-btn')) {
                 e.preventDefault();
                 // Φόρτωση δεδομένων για επεξεργασία
-                apiFetch(`${apiBaseUrl}/trainers/read_one.php?id=${id}`)
+                apiFetch(`${API_BASE_URL}/trainers/read_one.php?id=${id}`)
                     .then(t => {
                         if (t && t.id) {
                             document.getElementById('trainer-id').value = t.id;
@@ -2117,7 +2118,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (targetLink.classList.contains('delete-trainer-btn')) {
                 e.preventDefault();
                 if(confirm('Είστε σίγουροι; Η διαγραφή ενός γυμναστή θα τον αφαιρέσει από τα events που έχει αναλάβει.')){
-                    apiFetch(`${apiBaseUrl}/trainers/delete.php`, {
+                    apiFetch(`${API_BASE_URL}/trainers/delete.php`, {
                         method: 'POST',
                         body: JSON.stringify({ id: id })
                     })
@@ -2136,7 +2137,7 @@ document.addEventListener('DOMContentLoaded', function() {
         trainerForm.addEventListener('submit', e => {
             e.preventDefault();
             const id = document.getElementById('trainer-id').value;
-            const url = id ? `${apiBaseUrl}/trainers/update.php` : `${apiBaseUrl}/trainers/create.php`;
+            const url = id ? `${API_BASE_URL}/trainers/update.php` : `${API_BASE_URL}/trainers/create.php`;
             const formData = {
                 id: id || undefined,
                 first_name: document.getElementById('trainer-first-name').value,

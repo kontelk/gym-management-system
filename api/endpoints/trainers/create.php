@@ -5,13 +5,18 @@
 // Χρήση: Δημιουργεί έναν νέο γυμναστή.
 // =================================================================
 
+// Φορτώνουμε το bootstrap αρχείο για να ρυθμίσουμε το περιβάλλον
+// Αυτό θα φορτώσει τις ρυθμίσεις, τη βάση δεδομένων και τα μοντέλα
+// Το bootstrap.php πρέπει να βρίσκεται στο φάκελο api/
+require_once __DIR__ . '/../../bootstrap.php';
+// Συμπερίληψη άλλων απαραίτητων αρχείων
+include_once API_ROOT . '/models/Trainer.php';
+
+// Απαιτούμενες κεφαλίδες
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");
-include_once __DIR__ . '/../../core/Database.php';
-include_once __DIR__ . '/../../models/Trainer.php';
-include_once __DIR__ . '/../../services/TokenValidator.php';
-include_once __DIR__ . '/../../services/RoleValidator.php';
+
 
 $user_data = TokenValidator::validate();
 RoleValidator::validate($user_data['role_id'], 1);
@@ -24,6 +29,7 @@ if (!empty($data->first_name) && !empty($data->last_name)) {
     $trainer->first_name = $data->first_name;
     $trainer->last_name = $data->last_name;
     $trainer->bio = $data->bio ?? '';
+    
     if ($trainer->create()) {
         http_response_code(201);
         echo json_encode(["message" => "Ο γυμναστής δημιουργήθηκε."]);

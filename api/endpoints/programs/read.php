@@ -5,13 +5,17 @@
 // Περιγραφή: Επιστρέφει μια λίστα με όλα τα ενεργά προγράμματα.
 // =================================================================
 
+// Φορτώνουμε το bootstrap αρχείο για να ρυθμίσουμε το περιβάλλον
+// Αυτό θα φορτώσει τις ρυθμίσεις, τη βάση δεδομένων και τα μοντέλα
+// Το bootstrap.php πρέπει να βρίσκεται στο φάκελο api/
+require_once __DIR__ . '/../../bootstrap.php';
+// Συμπερίληψη άλλων απαραίτητων αρχείων
+include_once API_ROOT . '/models/Program.php';
+
 // Απαιτούμενες κεφαλίδες (headers) για τη σωστή λειτουργία του API
 header("Access-Control-Allow-Origin: *"); // Επιτρέπει την πρόσβαση από οποιαδήποτε πηγή
 header("Content-Type: application/json; charset=UTF-8"); // Ορίζει τον τύπο της απάντησης σε JSON
 
-// Συμπερίληψη των αρχείων για τη βάση δεδομένων και το model
-include_once __DIR__ . '/../../core/Database.php';
-include_once __DIR__ . '/../../models/Program.php';
 
 // Δημιουργία instance της βάσης δεδομένων και λήψη της σύνδεσης
 $database = Database::getInstance();
